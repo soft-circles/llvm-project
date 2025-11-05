@@ -966,6 +966,13 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_SELECT(SDNode *N) {
                      N->getOperand(0), LHS, RHS);
 }
 
+SDValue DAGTypeLegalizer::SoftenFloatRes_CTSELECT(SDNode *N) {
+  SDValue LHS = GetSoftenedFloat(N->getOperand(1));
+  SDValue RHS = GetSoftenedFloat(N->getOperand(2));
+  return DAG.getCTSelect(SDLoc(N), LHS.getValueType(), N->getOperand(0), LHS,
+                         RHS);
+}
+
 SDValue DAGTypeLegalizer::SoftenFloatRes_SELECT_CC(SDNode *N) {
   SDValue LHS = GetSoftenedFloat(N->getOperand(2));
   SDValue RHS = GetSoftenedFloat(N->getOperand(3));

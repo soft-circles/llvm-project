@@ -764,6 +764,12 @@ SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT(SDNode *N) {
                      GetScalarizedVector(N->getOperand(2)));
 }
 
+SDValue DAGTypeLegalizer::ScalarizeVecRes_CTSELECT(SDNode *N) {
+  SDValue LHS = GetScalarizedVector(N->getOperand(1));
+  return DAG.getCTSelect(SDLoc(N), LHS.getValueType(), N->getOperand(0), LHS,
+                         GetScalarizedVector(N->getOperand(2)));
+}
+
 SDValue DAGTypeLegalizer::ScalarizeVecRes_SELECT_CC(SDNode *N) {
   SDValue LHS = GetScalarizedVector(N->getOperand(2));
   return DAG.getNode(ISD::SELECT_CC, SDLoc(N), LHS.getValueType(),

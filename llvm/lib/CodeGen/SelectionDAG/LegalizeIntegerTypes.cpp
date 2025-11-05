@@ -2410,6 +2410,19 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
                                         N->getOperand(2)), 0);
 }
 
+SDValue DAGTypeLegalizer::PromoteIntOp_CTSELECT(SDNode *N, unsigned OpNo) {
+  assert(OpNo == 0 && "Only know how to promote the condition!");
+  SDValue Cond = N->getOperand(0);
+  EVT OpTy = N->getOperand(1).getValueType();
+
+  // Promote all the way up to the canonical SetCC type.
+  EVT OpVT = N->getOpcode() == ISD::CTSELECT ? OpTy.getScalarType() : OpTy;
+  Cond = PromoteTargetBoolean(Cond, OpVT);
+
+  return SDValue(
+      DAG.UpdateNodeOperands(N, Cond, N->getOperand(1), N->getOperand(2)), 0);
+}
+
 SDValue DAGTypeLegalizer::PromoteIntOp_SELECT_CC(SDNode *N, unsigned OpNo) {
   assert(OpNo == 0 && "Don't know how to promote this operand!");
 
