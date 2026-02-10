@@ -1962,7 +1962,6 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
 }
 
 SDValue DAGCombiner::visit(SDNode *N) {
-
   // clang-format off
   switch (N->getOpcode()) {
   default: break;
@@ -13729,7 +13728,7 @@ SDValue DAGCombiner::visitCT_SELECT(SDNode *N) {
   return SDValue();
 }
 
-SDValue DAGCombiner::visitCTSELECT(SDNode *N) {
+SDValue DAGCombiner::visitConstantTimeSelect(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   SDValue N1 = N->getOperand(1);
   SDValue N2 = N->getOperand(2);
