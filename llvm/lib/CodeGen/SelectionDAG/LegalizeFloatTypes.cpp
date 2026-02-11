@@ -2861,6 +2861,13 @@ SDValue DAGTypeLegalizer::SoftPromoteHalfRes_SELECT(SDNode *N) {
                      N->getOperand(0), Op1, Op2);
 }
 
+SDValue DAGTypeLegalizer::SoftPromoteHalfRes_CTSELECT(SDNode *N) {
+  SDValue Op1 = GetSoftPromotedHalf(N->getOperand(1));
+  SDValue Op2 = GetSoftPromotedHalf(N->getOperand(2));
+  return DAG.getCTSelect(SDLoc(N), Op1.getValueType(), N->getOperand(0), Op1,
+                         Op2);
+}
+
 SDValue DAGTypeLegalizer::SoftPromoteHalfRes_SELECT_CC(SDNode *N) {
   SDValue Op2 = GetSoftPromotedHalf(N->getOperand(2));
   SDValue Op3 = GetSoftPromotedHalf(N->getOperand(3));

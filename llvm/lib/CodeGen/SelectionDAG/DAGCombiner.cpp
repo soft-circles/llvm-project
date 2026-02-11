@@ -6256,7 +6256,6 @@ static SDValue isSaturatingMinMax(SDValue N0, SDValue N1, SDValue N2,
     N0CC = cast<CondCodeSDNode>(N0.getOperand(4))->get();
     break;
   case ISD::SELECT:
-  case ISD::CTSELECT:
   case ISD::VSELECT:
     if (N0.getOperand(0).getOpcode() != ISD::SETCC)
       return SDValue();

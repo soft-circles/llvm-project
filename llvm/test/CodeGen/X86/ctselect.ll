@@ -20,6 +20,9 @@ define i8 @test_ctselect_i8(i1 %cond, i8 %a, i8 %b) #0 {
 ; X32-LABEL: test_ctselect_i8:
 ; X32:       # %bb.0:
 ; X32-NEXT:    movzbl {{[0-9]+}}(%esp), %eax
+; X32-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
+; X32-NEXT:    movzbl {{[0-9]+}}(%esp), %edx
+; X32-NEXT:    xorb %cl, %dl
 ; X32-NEXT:    andb $1, %al
 ; X32-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
 ; X32-NEXT:    movzbl {{[0-9]+}}(%esp), %edx
@@ -32,6 +35,9 @@ define i8 @test_ctselect_i8(i1 %cond, i8 %a, i8 %b) #0 {
 ; X32-NOCMOV-LABEL: test_ctselect_i8:
 ; X32-NOCMOV:       # %bb.0:
 ; X32-NOCMOV-NEXT:    movzbl {{[0-9]+}}(%esp), %eax
+; X32-NOCMOV-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
+; X32-NOCMOV-NEXT:    movzbl {{[0-9]+}}(%esp), %edx
+; X32-NOCMOV-NEXT:    xorb %cl, %dl
 ; X32-NOCMOV-NEXT:    andb $1, %al
 ; X32-NOCMOV-NEXT:    movzbl {{[0-9]+}}(%esp), %ecx
 ; X32-NOCMOV-NEXT:    movzbl {{[0-9]+}}(%esp), %edx
