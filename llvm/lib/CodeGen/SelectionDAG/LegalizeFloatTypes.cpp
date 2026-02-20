@@ -966,7 +966,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_SELECT(SDNode *N) {
                      N->getOperand(0), LHS, RHS);
 }
 
-SDValue DAGTypeLegalizer::SoftenFloatRes_CTSELECT(SDNode *N) {
+SDValue DAGTypeLegalizer::SoftenFloatRes_CT_SELECT(SDNode *N) {
   SDValue LHS = GetSoftenedFloat(N->getOperand(1));
   SDValue RHS = GetSoftenedFloat(N->getOperand(2));
   return DAG.getCTSelect(SDLoc(N), LHS.getValueType(), N->getOperand(0), LHS,
@@ -2861,7 +2861,7 @@ SDValue DAGTypeLegalizer::SoftPromoteHalfRes_SELECT(SDNode *N) {
                      N->getOperand(0), Op1, Op2);
 }
 
-SDValue DAGTypeLegalizer::SoftPromoteHalfRes_CTSELECT(SDNode *N) {
+SDValue DAGTypeLegalizer::SoftPromoteHalfRes_CT_SELECT(SDNode *N) {
   SDValue Op1 = GetSoftPromotedHalf(N->getOperand(1));
   SDValue Op2 = GetSoftPromotedHalf(N->getOperand(2));
   return DAG.getCTSelect(SDLoc(N), Op1.getValueType(), N->getOperand(0), Op1,
