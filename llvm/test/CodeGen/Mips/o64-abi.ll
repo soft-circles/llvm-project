@@ -31,6 +31,36 @@ define i64 @nonleaf(i64 %x) {
   ret i64 %s
 }
 
+; A partial aggregate is left-justified in its 8-byte slot. This must use the
+; original i40 width even though type legalization widens it to i64.
+define zeroext i8 @aggregate_i40_first(i40 inreg %s) {
+; CHECK-LABEL: aggregate_i40_first:
+; CHECK:       dsrl ${{[0-9]+}}, $4, 56
+  %shift = lshr i40 %s, 32
+  %first = trunc i40 %shift to i8
+  ret i8 %first
+}
+
+; The same left-justification applies after the four register slots are full.
+define zeroext i8 @aggregate_i24_stack_first(i32 signext %a, i32 signext %b,
+                                             i32 signext %c, i32 signext %d,
+                                             i24 inreg %s) {
+; CHECK-LABEL: aggregate_i24_stack_first:
+; CHECK:       lbu $2, 32($sp)
+  %shift = lshr i24 %s, 16
+  %first = trunc i24 %shift to i8
+  ret i8 %first
+}
+
+; A trailing four-byte fragment also starts at offset zero of its stack slot.
+define i32 @aggregate_i32_stack(i32 signext %a, i32 signext %b,
+                                i32 signext %c, i64 inreg %head,
+                                i32 inreg %tail) {
+; CHECK-LABEL: aggregate_i32_stack:
+; CHECK:       lw $2, 32($sp)
+  ret i32 %tail
+}
+
 ; ELF: Class: ELF32
 ; ELF: Data: 2's complement, big endian
 ; ELF: Flags: {{.*}}o64{{.*}}mips3

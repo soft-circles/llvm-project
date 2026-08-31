@@ -3215,6 +3215,20 @@ static bool CC_MipsO64(unsigned ValNo, MVT ValVT, MVT LocVT,
   const MVT OrigLocVT = LocVT;
   const bool IsNarrow = OrigLocVT.getStoreSize() < SlotSize;
 
+  // Clang marks coerced aggregate pieces inreg.  On big-endian MIPS they are
+  // left-justified in the 64-bit slot, even when type legalization has already
+  // widened (for example) i40 to i64.
+  const bool UseUpperBits = BigEndian && ArgFlags.isInReg();
+  if (UseUpperBits) {
+    LocVT = MVT::i64;
+    if (ArgFlags.isSExt())
+      LocInfo = CCValAssign::SExtUpper;
+    else if (ArgFlags.isZExt())
+      LocInfo = CCValAssign::ZExtUpper;
+    else
+      LocInfo = CCValAssign::AExtUpper;
+  }
+
   // A float rides in the FPU only while it is one of the first two arguments
   // and no integer register has been consumed yet. This is o32's rule, which
   // o64 inherits: f(float, float, ...) puts both in the FPU, but
@@ -3240,13 +3254,13 @@ static bool CC_MipsO64(unsigned ValNo, MVT ValVT, MVT LocVT,
   }
 
   if (!Reg) {
-    // Stack. Slots are 8 bytes, but a narrow value occupies only the low 4
-    // bytes of its slot and the rest is left untouched: GCC emits `sw` at
-    // slot+4 for an int or a promoted short. So the location has to stay
-    // narrow. Widening it here would make the callee load 8 bytes and trust
-    // four bytes the caller never wrote.
+    // Stack scalar values stay narrow and occupy the low end of their slot.
+    // Aggregate fragments are widened above so their bytes remain at the
+    // start of the slot and any-extension padding is discarded by the callee.
     unsigned Offset = State.AllocateStack(SlotSize, Align(SlotSize));
-    if (BigEndian && IsNarrow)
+    // Scalars occupy the low end of a big-endian slot.  An aggregate fragment
+    // stays at the start of the slot so its in-memory byte order is preserved.
+    if (BigEndian && IsNarrow && !UseUpperBits)
       Offset += SlotSize - OrigLocVT.getStoreSize();
     State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
     return false;
@@ -3265,19 +3279,15 @@ static bool CC_MipsO64(unsigned ValNo, MVT ValVT, MVT LocVT,
   } else if (ValVT == MVT::f64) {
     LocVT = MVT::i64;
     LocInfo = CCValAssign::BCvt;
-  } else if (IsNarrow) {
-    // In a register the value fills the whole 64 bits. An ordinary scalar is
-    // sign- or zero-extended across it, but a piece of an aggregate sits in the
-    // top of the slot on big-endian, which is what CC_MipsN spells out as
-    // CCPromoteToUpperBitsInType.
-    const bool UpperBits = BigEndian && ArgFlags.isInReg();
+  } else if (!UseUpperBits && IsNarrow) {
+    // An ordinary narrow scalar fills the whole 64-bit register.
     LocVT = MVT::i64;
     if (ArgFlags.isSExt())
-      LocInfo = UpperBits ? CCValAssign::SExtUpper : CCValAssign::SExt;
+      LocInfo = CCValAssign::SExt;
     else if (ArgFlags.isZExt())
-      LocInfo = UpperBits ? CCValAssign::ZExtUpper : CCValAssign::ZExt;
+      LocInfo = CCValAssign::ZExt;
     else
-      LocInfo = UpperBits ? CCValAssign::AExtUpper : CCValAssign::AExt;
+      LocInfo = CCValAssign::AExt;
   }
 
   State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
