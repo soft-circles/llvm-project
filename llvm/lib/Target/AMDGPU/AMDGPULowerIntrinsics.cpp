@@ -159,6 +159,11 @@ bool AMDGPULowerIntrinsicsImpl::visitBarrier(IntrinsicInst &I) {
         (BarrierID >= AMDGPU::Barrier::NAMED_BARRIER_FIRST &&
          BarrierID <= AMDGPU::Barrier::NAMED_BARRIER_LAST))
       IsWorkgroupScope = true;
+    else if (I.getIntrinsicID() == Intrinsic::amdgcn_s_barrier_signal_isfirst &&
+             BarrierID == AMDGPU::Barrier::CLUSTER)
+      I.getFunction()->getContext().emitError(
+          "s_barrier_signal_isfirst does not support user_cluster_barrier_id "
+          "(-3)");
   } else {
     assert(I.getIntrinsicID() == Intrinsic::amdgcn_s_barrier);
     IsWorkgroupScope = true;

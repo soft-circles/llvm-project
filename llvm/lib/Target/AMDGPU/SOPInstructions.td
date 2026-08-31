@@ -68,6 +68,7 @@ class SOP1_Real<bits<8> op, SOP1_Pseudo ps, string real_name = ps.Mnemonic> :
   let Uses               = ps.Uses;
   let Defs               = ps.Defs;
   let isConvergent       = ps.isConvergent;
+  let UseNamedOperandTable = ps.UseNamedOperandTable;
 
   // encoding
   bits<7> sdst;

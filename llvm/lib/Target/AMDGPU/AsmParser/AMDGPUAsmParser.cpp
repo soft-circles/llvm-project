@@ -1864,6 +1864,8 @@ private:
   bool validateTFE(const MCInst &Inst, const OperandVector &Operands);
   bool validateLdsDirect(const MCInst &Inst, const OperandVector &Operands);
   bool validateWMMA(const MCInst &Inst, const OperandVector &Operands);
+  bool validateClusterBarrierIsFirst(const MCInst &Inst,
+                                     const OperandVector &Operands);
   unsigned getConstantBusLimit(unsigned Opcode) const;
   bool usesConstantBus(const MCInst &Inst, unsigned OpIdx);
   bool isInlineConstant(const MCInst &Inst, unsigned OpIdx) const;
@@ -5585,6 +5587,24 @@ bool AMDGPUAsmParser::validateWMMA(const MCInst &Inst,
   return true;
 }
 
+bool AMDGPUAsmParser::validateClusterBarrierIsFirst(
+    const MCInst &Inst, const OperandVector &Operands) {
+  unsigned Opc = Inst.getOpcode();
+  if (Opc != AMDGPU::S_BARRIER_SIGNAL_ISFIRST_IMM_gfx12 &&
+      Opc != AMDGPU::S_BARRIER_SIGNAL_ISFIRST_IMM_gfx13)
+    return true;
+
+  int Src0Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::src0);
+  int BarrierID = Inst.getOperand(Src0Idx).getImm();
+  if (BarrierID != AMDGPU::Barrier::CLUSTER)
+    return true;
+
+  Error(
+      getOperandLoc(Operands, Src0Idx),
+      "s_barrier_signal_isfirst does not support user_cluster_barrier_id (-3)");
+  return false;
+}
+
 bool AMDGPUAsmParser::validateInstruction(const MCInst &Inst, SMLoc IDLoc,
                                           const OperandVector &Operands) {
   if (!validateLdsDirect(Inst, Operands))
@@ -5714,6 +5734,9 @@ bool AMDGPUAsmParser::validateInstruction(const MCInst &Inst, SMLoc IDLoc,
     return false;
   }
   if (!validateWMMA(Inst, Operands)) {
+    return false;
+  }
+  if (!validateClusterBarrierIsFirst(Inst, Operands)) {
     return false;
   }
 
