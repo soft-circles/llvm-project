@@ -9819,9 +9819,10 @@ TargetLowering::expandCONVERT_FROM_ARBITRARY_FP(SDNode *Node,
     // legalize it. Vector types don't have this problem because they
     // are subject to LegalizeVectorOps and another type legalization phase
     // will follow.
-    if (getTypeAction(*DAG.getContext(), IntScalarVT) != TypePromoteInteger)
+    if (getTypeAction(*DAG.getContext(), IntScalarVT) != TypePromoteInteger) {
       // We only know how to handle situations where the legal type is wider.
       return SDValue();
+    }
     IntVT = getTypeToTransformTo(*DAG.getContext(), IntScalarVT);
   }
 
@@ -9916,18 +9917,16 @@ TargetLowering::expandCONVERT_FROM_ARBITRARY_FP(SDNode *Node,
   // Denormal value conversion.
   SDValue DenormResult;
   {
-    const unsigned IntVTBits = DstBits;
+    const unsigned IntVTBits = IntVT.getScalarSizeInBits();
     SDValue LeadingZeros =
         DAG.getNode(ISD::CTLZ_ZERO_POISON, dl, IntVT, MantField);
 
     const int DenormExpConst =
         (int)IntVTBits + DstBias - SrcBias - (int)SrcMant;
-    SDValue DenormDstExp =
-        DAG.getNode(ISD::SUB, dl, IntVT,
-                    DAG.getConstant(APInt(IntVT.getScalarSizeInBits(),
-                                          DenormExpConst, true),
-                                    dl, IntVT),
-                    LeadingZeros);
+    SDValue DenormDstExp = DAG.getNode(
+        ISD::SUB, dl, IntVT,
+        DAG.getConstant(APInt(IntVTBits, DenormExpConst, true), dl, IntVT),
+        LeadingZeros);
 
     SDValue MantMSB =
         DAG.getNode(ISD::SUB, dl, IntVT,
