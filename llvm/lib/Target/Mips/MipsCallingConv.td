@@ -111,6 +111,7 @@ def RetCC_MipsO32 : CallingConv<[
 
 def CC_MipsO32_FP32 : CustomCallingConv;
 def CC_MipsO32_FP64 : CustomCallingConv;
+def CC_MipsO64 : CustomCallingConv;
 
 def CC_MipsO32_FP : CallingConv<[
   CCIfSubtargetNot<"isFP64bit()", CCDelegateTo<CC_MipsO32_FP32>>,
@@ -298,6 +299,7 @@ def CC_Mips_FastCC : CallingConv<[
 //===----------------------------------------------------------------------===//
 
 def RetCC_Mips : CallingConv<[
+  CCIfSubtarget<"isABI_O64()", CCDelegateTo<RetCC_MipsN>>,
   CCIfSubtarget<"isABI_N32()", CCDelegateTo<RetCC_MipsN>>,
   CCIfSubtarget<"isABI_N64()", CCDelegateTo<RetCC_MipsN>>,
   CCDelegateTo<RetCC_MipsO32>
@@ -339,6 +341,7 @@ def CC_Mips_FixedArg : CallingConv<[
 
   CCIfCC<"CallingConv::Fast", CCDelegateTo<CC_Mips_FastCC>>,
 
+  CCIfSubtarget<"isABI_O64()", CCDelegateTo<CC_MipsO64>>,
   CCIfSubtarget<"isABI_O32()", CCIfSubtargetNot<"isGP64bit()", CCDelegateTo<CC_MipsO32_FP>>>,
   CCDelegateTo<CC_MipsN>
 ]>;
@@ -346,6 +349,7 @@ def CC_Mips_FixedArg : CallingConv<[
 def CC_Mips_VarArg : CallingConv<[
   CCIfByVal<CCDelegateTo<CC_Mips_ByVal>>,
 
+  CCIfSubtarget<"isABI_O64()", CCDelegateTo<CC_MipsO64>>,
   CCIfSubtarget<"isABI_O32()", CCDelegateTo<CC_MipsO32_FP>>,
   CCDelegateTo<CC_MipsN_VarArg>
 ]>;
@@ -377,6 +381,11 @@ def CSR_O32_FP64 :
 def CSR_N32 : CalleeSavedRegs<(add D20_64, D22_64, D24_64, D26_64, D28_64,
                                    D30_64, RA_64, FP_64, GP_64,
                                    (sequence "S%u_64", 7, 0))>;
+
+// O64 keeps the old ABI's $f20-$f31 save range and call-clobbered $gp, but
+// preserves the full 64-bit value of each saved register.
+def CSR_O64 : CalleeSavedRegs<(add (sequence "D%u_64", 31, 20), RA_64,
+                                   FP_64, (sequence "S%u_64", 7, 0))>;
 
 def CSR_N64 : CalleeSavedRegs<(add (sequence "D%u_64", 31, 24), RA_64, FP_64,
                                    GP_64, (sequence "S%u_64", 7, 0))>;

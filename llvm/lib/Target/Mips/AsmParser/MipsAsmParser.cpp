@@ -596,6 +596,7 @@ public:
   bool isABI_N32() const { return ABI.IsN32(); }
   bool isABI_N64() const { return ABI.IsN64(); }
   bool isABI_O32() const { return ABI.IsO32(); }
+  bool isABI_O64() const { return ABI.IsO64(); }
   bool isABI_FPXX() const {
     return getSTI().hasFeature(Mips::FeatureFPXX);
   }

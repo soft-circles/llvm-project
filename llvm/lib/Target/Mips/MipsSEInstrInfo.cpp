@@ -354,7 +354,7 @@ void MipsSEInstrInfo::loadRegFromStack(
     if (DestReg == Mips::HI0)
       LdOp = Mips::MTHI;
 
-    if (Subtarget.getABI().ArePtrs64bit()) {
+    if (Subtarget.getABI().AreGprs64bit()) {
       Reg = Mips::K0_64;
       if (DestReg == Mips::HI0_64)
         LdOp = Mips::MTHI64;

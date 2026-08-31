@@ -260,11 +260,13 @@ MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
   else if (isABI_N32() || isABI_N64())
     stackAlignment = Align(16);
   else {
-    assert(isABI_O32() && "Unknown ABI for stack alignment!");
+    // o64 shares o32's 8-byte stack alignment (see newlib's machine/asm.h,
+    // which sets LOG2_STACK_ALGN to 3 for both).
+    assert((isABI_O32() || isABI_O64()) && "Unknown ABI for stack alignment!");
     stackAlignment = Align(8);
   }
 
-  if ((isABI_N32() || isABI_N64()) && !isGP64bit())
+  if ((isABI_N32() || isABI_N64() || isABI_O64()) && !isGP64bit())
     reportFatalUsageError("64-bit code requested on a subtarget that doesn't "
                           "support it!");
 
@@ -284,6 +286,7 @@ Reloc::Model MipsSubtarget::getRelocationModel() const {
 bool MipsSubtarget::isABI_N64() const { return getABI().IsN64(); }
 bool MipsSubtarget::isABI_N32() const { return getABI().IsN32(); }
 bool MipsSubtarget::isABI_O32() const { return getABI().IsO32(); }
+bool MipsSubtarget::isABI_O64() const { return getABI().IsO64(); }
 const MipsABIInfo &MipsSubtarget::getABI() const { return TM.getABI(); }
 
 const SelectionDAGTargetInfo *MipsSubtarget::getSelectionDAGInfo() const {

@@ -28,13 +28,14 @@ class Target;
 class MipsAsmBackend : public MCAsmBackend {
   Triple TheTriple;
   bool IsN32;
+  bool IsO64;
 
 public:
   MipsAsmBackend(const Target &T, const MCRegisterInfo &MRI, const Triple &TT,
-                 StringRef CPU, bool N32)
+                 StringRef CPU, bool N32, bool O64 = false)
       : MCAsmBackend(TT.isLittleEndian() ? llvm::endianness::little
                                          : llvm::endianness::big),
-        TheTriple(TT), IsN32(N32) {}
+        TheTriple(TT), IsN32(N32), IsO64(O64) {}
 
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override;

@@ -57,10 +57,11 @@
 // MIPS-ABI-N64: "-target-cpu" "mips64r2"
 // MIPS-ABI-N64: "-target-abi" "n64"
 //
-// RUN: not %clang --target=mips64-linux-gnu -c %s \
+// RUN: %clang --target=mips64-linux-gnu -### -c %s \
 // RUN:        -mabi=o64 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-ABI-O64 %s
-// MIPS-ABI-O64: error: unknown target ABI 'o64'
+// MIPS-ABI-O64: "-target-cpu" "mips64r2"
+// MIPS-ABI-O64: "-target-abi" "o64"
 //
 // RUN: not %clang --target=mips-linux-gnu -c %s \
 // RUN:        -mabi=unknown 2>&1 \

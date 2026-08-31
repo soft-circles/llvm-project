@@ -156,11 +156,12 @@ void MipsFunctionInfo::initGlobalBaseReg(MachineFunction &MF) {
 
 void MipsFunctionInfo::createEhDataRegsFI(MachineFunction &MF) {
   const TargetRegisterInfo &TRI = *MF.getSubtarget().getRegisterInfo();
+  const MipsABIInfo &ABI =
+      static_cast<const MipsTargetMachine &>(MF.getTarget()).getABI();
   for (int &I : EhDataRegFI) {
-    const TargetRegisterClass &RC =
-        static_cast<const MipsTargetMachine &>(MF.getTarget()).getABI().IsN64()
-            ? Mips::GPR64RegClass
-            : Mips::GPR32RegClass;
+    const TargetRegisterClass &RC = ABI.AreGprs64bit()
+                                        ? Mips::GPR64RegClass
+                                        : Mips::GPR32RegClass;
 
     I = MF.getFrameInfo().CreateStackObject(TRI.getSpillSize(RC),
                                             TRI.getSpillAlign(RC), false);

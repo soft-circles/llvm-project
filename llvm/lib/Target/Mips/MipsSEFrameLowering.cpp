@@ -680,7 +680,7 @@ void MipsSEFrameLowering::emitEpilogue(MachineFunction &MF,
 
   if (MipsFI->callsEhReturn()) {
     const TargetRegisterClass *RC =
-        ABI.ArePtrs64bit() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
+        ABI.AreGprs64bit() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
 
     // Find first instruction that restores a callee-saved register.
     MachineBasicBlock::iterator I = MBBI;
@@ -782,7 +782,7 @@ bool MipsSEFrameLowering::spillCalleeSavedRegisters(
       DebugLoc DL = MI->getDebugLoc();
 
       unsigned Op = 0;
-      if (!STI.getABI().ArePtrs64bit()) {
+      if (!STI.getABI().AreGprs64bit()) {
         Op = IsHI ? Mips::MFHI : Mips::MFLO;
         Reg = Mips::K0;
       } else {
@@ -829,9 +829,9 @@ void MipsSEFrameLowering::determineCalleeSaves(MachineFunction &MF,
   const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   MipsABIInfo ABI = STI.getABI();
-  unsigned RA = ABI.IsN64() ? Mips::RA_64 : Mips::RA;
+  unsigned RA = ABI.AreGprs64bit() ? Mips::RA_64 : Mips::RA;
   unsigned FP = ABI.GetFramePtr();
-  unsigned BP = ABI.IsN64() ? Mips::S7_64 : Mips::S7;
+  unsigned BP = ABI.AreGprs64bit() ? Mips::S7_64 : Mips::S7;
 
   // Mark $ra and $fp as used if function has dedicated frame pointer.
   if (hasFP(MF)) {
@@ -873,7 +873,7 @@ void MipsSEFrameLowering::determineCalleeSaves(MachineFunction &MF,
     return;
 
   const TargetRegisterClass &RC =
-      ABI.ArePtrs64bit() ? Mips::GPR64RegClass : Mips::GPR32RegClass;
+      ABI.AreGprs64bit() ? Mips::GPR64RegClass : Mips::GPR32RegClass;
   int FI = MF.getFrameInfo().CreateSpillStackObject(TRI->getSpillSize(RC),
                                                     TRI->getSpillAlign(RC));
   RS->addScavengingFrameIndex(FI);

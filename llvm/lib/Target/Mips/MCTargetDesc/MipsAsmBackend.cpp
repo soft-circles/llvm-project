@@ -218,7 +218,7 @@ static unsigned adjustFixupValue(const MCFixup &Fixup, uint64_t Value,
 
 std::unique_ptr<MCObjectTargetWriter>
 MipsAsmBackend::createObjectTargetWriter() const {
-  return createMipsELFObjectWriter(TheTriple, IsN32);
+  return createMipsELFObjectWriter(TheTriple, IsN32, IsO64);
 }
 
 // Little-endian fixup data byte ordering:
@@ -623,5 +623,5 @@ MCAsmBackend *llvm::createMipsAsmBackend(const Target &T,
   MipsABIInfo ABI = MipsABIInfo::computeTargetABI(STI.getTargetTriple(),
                                                   STI.getCPU(), Options);
   return new MipsAsmBackend(T, MRI, STI.getTargetTriple(), STI.getCPU(),
-                            ABI.IsN32());
+                            ABI.IsN32(), ABI.IsO64());
 }

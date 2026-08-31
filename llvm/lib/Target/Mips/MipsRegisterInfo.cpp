@@ -111,6 +111,9 @@ MipsRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   if (Subtarget.isABI_N32())
     return CSR_N32_SaveList;
 
+  if (Subtarget.isABI_O64())
+    return CSR_O64_SaveList;
+
   if (Subtarget.isFP64bit())
     return CSR_O32_FP64_SaveList;
 
@@ -132,6 +135,9 @@ MipsRegisterInfo::getCallPreservedMask(const MachineFunction &MF,
 
   if (Subtarget.isABI_N32())
     return CSR_N32_RegMask;
+
+  if (Subtarget.isABI_O64())
+    return CSR_O64_RegMask;
 
   if (Subtarget.isFP64bit())
     return CSR_O32_FP64_RegMask;

@@ -177,7 +177,7 @@ public:
     FpABI = FpABIKind::ANY;
     if (P.useSoftFloat())
       FpABI = FpABIKind::SOFT;
-    else if (P.isABI_N32() || P.isABI_N64())
+    else if (P.isABI_N32() || P.isABI_N64() || P.isABI_O64())
       FpABI = FpABIKind::S64;
     else if (P.isABI_O32()) {
       if (P.isABI_FPXX())

@@ -988,6 +988,8 @@ void MipsTargetELFStreamer::finish() {
     EFlags |= ELF::EF_MIPS_ABI_O32;
   else if (getABI().IsN32())
     EFlags |= ELF::EF_MIPS_ABI2;
+  else if (getABI().IsO64())
+    EFlags |= ELF::EF_MIPS_ABI_O64;
 
   if (Features[Mips::FeatureGP64Bit]) {
     if (getABI().IsO32())

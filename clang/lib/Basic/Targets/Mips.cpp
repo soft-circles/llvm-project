@@ -94,6 +94,10 @@ void MipsTargetInfo::getTargetDefines(const LangOptions &Opts,
   if (ABI == "o32") {
     Builder.defineMacro("__mips", "32");
     Builder.defineMacro("_MIPS_ISA", "_MIPS_ISA_MIPS32");
+  } else if (ABI == "o64") {
+    Builder.defineMacro("__mips", "3");
+    Builder.defineMacro("__mips64");
+    Builder.defineMacro("_MIPS_ISA", "_MIPS_ISA_MIPS3");
   } else {
     Builder.defineMacro("__mips", "64");
     Builder.defineMacro("__mips64");
@@ -118,6 +122,10 @@ void MipsTargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__mips_n64");
     Builder.defineMacro("_ABI64", "3");
     Builder.defineMacro("_MIPS_SIM", "_ABI64");
+  } else if (ABI == "o64") {
+    Builder.defineMacro("__mips_o64");
+    Builder.defineMacro("_ABIO64", "4");
+    Builder.defineMacro("_MIPS_SIM", "_ABIO64");
   } else
     llvm_unreachable("Invalid ABI.");
 
@@ -241,6 +249,7 @@ unsigned MipsTargetInfo::getUnwindWordWidth() const {
       .Case("o32", 32)
       .Case("n32", 64)
       .Case("n64", 64)
+      .Case("o64", 64)
       .Default(getPointerWidth(LangAS::Default));
 }
 
@@ -252,7 +261,8 @@ bool MipsTargetInfo::validateTarget(DiagnosticsEngine &Diags) const {
   }
 
   // 64-bit ABI's require 64-bit CPU's.
-  if (!processorSupportsGPR64() && (ABI == "n32" || ABI == "n64")) {
+  if (!processorSupportsGPR64() &&
+      (ABI == "n32" || ABI == "n64" || ABI == "o64")) {
     Diags.Report(diag::err_target_unsupported_abi) << ABI << CPU;
     return false;
   }

@@ -30,6 +30,8 @@ class LLVM_LIBRARY_VISIBILITY MipsTargetInfo : public TargetInfo {
       Layout = "m:m-p:32:32-i8:8:32-i16:16:32-i64:64-n32-S64";
     else if (ABI == "n32")
       Layout = "m:e-p:32:32-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
+    else if (ABI == "o64")
+      Layout = "m:e-p:32:32-i8:8:32-i16:16:32-i64:64-i128:64-n32:64-S64";
     else if (ABI == "n64")
       Layout = "m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
     else
@@ -87,7 +89,8 @@ public:
   }
 
   enum FPModeEnum getDefaultFPMode() const {
-    if (CPU == "mips32r6" || ABI == "n32" || ABI == "n64" || ABI == "64")
+    if (CPU == "mips32r6" || ABI == "n32" || ABI == "n64" || ABI == "64" ||
+        ABI == "o64")
       return FP64;
     else if (CPU == "mips1")
       return FP32;
@@ -115,6 +118,15 @@ public:
     }
     if (Name == "n64") {
       setN64ABITypes();
+      ABI = Name;
+      return true;
+    }
+    if (Name == "o64") {
+      // o64 is o32's type model (32-bit long and pointers) on 64-bit
+      // registers, so the only difference is what fits in a register.
+      setO32ABITypes();
+      Int128Align = 64;
+      MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
       ABI = Name;
       return true;
     }
@@ -433,13 +445,14 @@ public:
         {{"gp"}, "$28"}, {{"sp", "$sp"}, "$29"}, {{"fp", "$fp"}, "$30"},
         {{"ra"}, "$31"}
     };
-    if (ABI == "o32")
+    if (ABI == "o32" || ABI == "o64")
       return llvm::ArrayRef(O32RegAliases);
     return llvm::ArrayRef(NewABIRegAliases);
   }
 
   bool hasInt128Type() const override {
-    return (ABI == "n32" || ABI == "n64") || getTargetOpts().ForceEnableInt128;
+    return (ABI == "o64" || ABI == "n32" || ABI == "n64") ||
+           getTargetOpts().ForceEnableInt128;
   }
 
   unsigned getUnwindWordWidth() const override;

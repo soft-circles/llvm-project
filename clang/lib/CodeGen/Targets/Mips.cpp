@@ -20,6 +20,9 @@ using namespace clang::CodeGen;
 namespace {
 class MipsABIInfo : public ABIInfo {
   bool IsO32;
+  // o64 takes n-style 8-byte argument slots but o32-style memory returns, so it
+  // cannot be folded into IsO32 either way.
+  bool IsO64;
   const unsigned MinABIStackAlignInBytes, StackAlignInBytes;
   void CoerceToIntArgs(uint64_t TySize,
                        SmallVectorImpl<llvm::Type *> &ArgList) const;
@@ -28,8 +31,9 @@ class MipsABIInfo : public ABIInfo {
   llvm::Type* getPaddingType(uint64_t Align, uint64_t Offset) const;
 public:
   MipsABIInfo(CodeGenTypes &CGT, bool _IsO32) :
-    ABIInfo(CGT), IsO32(_IsO32), MinABIStackAlignInBytes(IsO32 ? 4 : 8),
-    StackAlignInBytes(IsO32 ? 8 : 16) {}
+    ABIInfo(CGT), IsO32(_IsO32), IsO64(getTarget().getABI() == "o64"),
+    MinABIStackAlignInBytes(IsO32 ? 4 : 8),
+    StackAlignInBytes(IsO32 || IsO64 ? 8 : 16) {}
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType RetTy, uint64_t &Offset) const;
@@ -318,8 +322,9 @@ ABIArgInfo MipsABIInfo::classifyReturnType(QualType RetTy) const {
         return ABIArgInfo::getDirect();
 
       // O32 returns integer vectors in registers and N32/N64 returns all small
-      // aggregates in registers.
-      if (!IsO32 ||
+      // aggregates in registers. o64 follows O32 here: GCC returns every
+      // aggregate through the hidden pointer in $4.
+      if ((!IsO32 && !IsO64) ||
           (RetTy->isVectorType() && !RetTy->hasFloatingRepresentation())) {
         ABIArgInfo ArgInfo =
             ABIArgInfo::getDirect(returnAggregateInRegs(RetTy, Size));

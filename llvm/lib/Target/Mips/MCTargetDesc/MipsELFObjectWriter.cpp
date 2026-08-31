@@ -598,10 +598,12 @@ bool MipsELFObjectWriter::needsRelocateWithSymbol(const MCValue &V,
 }
 
 std::unique_ptr<MCObjectTargetWriter>
-llvm::createMipsELFObjectWriter(const Triple &TT, bool IsN32) {
+llvm::createMipsELFObjectWriter(const Triple &TT, bool IsN32, bool IsO64) {
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TT.getOS());
-  bool IsN64 = TT.isArch64Bit() && !IsN32;
-  bool HasRelocationAddend = TT.isArch64Bit();
+  // o64 produces ELF32 objects with REL relocations, exactly like o32, even
+  // though the triple is 64-bit. Only n64 gets ELF64 and RELA.
+  bool IsN64 = TT.isArch64Bit() && !IsN32 && !IsO64;
+  bool HasRelocationAddend = TT.isArch64Bit() && !IsO64;
   return std::make_unique<MipsELFObjectWriter>(OSABI, HasRelocationAddend,
                                                 IsN64);
 }

@@ -233,6 +233,7 @@ public:
   bool isABI_N64() const;
   bool isABI_N32() const;
   bool isABI_O32() const;
+  bool isABI_O64() const;
   const MipsABIInfo &getABI() const;
   bool isABI_FPXX() const { return isABI_O32() && IsFPXX; }
 
@@ -297,7 +298,8 @@ public:
   bool isPTR64bit() const { return IsPTR64bit; }
   bool isPTR32bit() const { return !IsPTR64bit; }
   bool hasSym32() const {
-    return (HasSym32 && isABI_N64()) || isABI_N32() || isABI_O32();
+    return (HasSym32 && isABI_N64()) || isABI_N32() || isABI_O32() ||
+           isABI_O64();
   }
   bool isSingleFloat() const { return IsSingleFloat; }
   bool isTargetCOFF() const { return TargetTriple.isOSBinFormatCOFF(); }

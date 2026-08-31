@@ -534,9 +534,9 @@ MipsTargetLowering::MipsTargetLowering(const MipsTargetMachine &TM,
   setMinFunctionAlignment(Subtarget.isGP64bit() ? Align(8) : Align(4));
 
   // The arguments on the stack are defined in terms of 4-byte slots on O32
-  // and 8-byte slots on N32/N64.
-  setMinStackArgumentAlignment((ABI.IsN32() || ABI.IsN64()) ? Align(8)
-                                                            : Align(4));
+  // and 8-byte slots on O64/N32/N64.
+  setMinStackArgumentAlignment(
+      (ABI.IsO64() || ABI.IsN32() || ABI.IsN64()) ? Align(8) : Align(4));
 
   setStackPointerRegisterToSaveRestore(ABI.IsN64() ? Mips::SP_64 : Mips::SP);
 
@@ -2436,7 +2436,8 @@ SDValue MipsTargetLowering::lowerVAARG(SDValue Op, SelectionDAG &DAG) const {
       llvm::MaybeAlign(Node->getConstantOperandVal(3)).valueOrOne();
   const Value *SV = cast<SrcValueSDNode>(Node->getOperand(2))->getValue();
   SDLoc DL(Node);
-  unsigned ArgSlotSizeInBytes = (ABI.IsN32() || ABI.IsN64()) ? 8 : 4;
+  unsigned ArgSlotSizeInBytes =
+      (ABI.IsO64() || ABI.IsN32() || ABI.IsN64()) ? 8 : 4;
 
   SDValue VAListLoad = DAG.getLoad(getPointerTy(DAG.getDataLayout()), DL, Chain,
                                    VAListPtr, MachinePointerInfo(SV));
@@ -3174,6 +3175,113 @@ static bool CC_MipsO32_FP64(unsigned ValNo, MVT ValVT,
   static const MCPhysReg F64Regs[] = { Mips::D12_64, Mips::D14_64 };
 
   return CC_MipsO32(ValNo, ValVT, LocVT, LocInfo, ArgFlags, State, F64Regs);
+}
+
+//===----------------------------------------------------------------------===//
+// Mips o64 ABI rules, matching GCC's -mabi=o64:
+// ---
+// There are four argument slots, each 8 bytes wide, mapped onto A0_64-A3_64.
+// Anything past the fourth slot goes on the stack in 8-byte slots.
+//
+// i8/i16/i32 - promoted to a full 64-bit slot.
+// f32/f64    - passed in F12/F13 (D12_64/D13_64) only while no integer register
+//              has been consumed and the argument occupies one of the first two
+//              slots. This is o32's rule, which o64 inherits verbatim. Any
+//              later float travels in that slot's GPR instead, in the low half.
+//
+// For vararg functions every argument goes through the GPRs, as in o32.
+//===----------------------------------------------------------------------===//
+static bool CC_MipsO64(unsigned ValNo, MVT ValVT, MVT LocVT,
+                       CCValAssign::LocInfo LocInfo, ISD::ArgFlagsTy ArgFlags,
+                       CCState &State) {
+  // The four argument slots. A0 and A0_64 alias, so a slot must be allocated
+  // exactly once; IntRegs32 only names the low half of a slot already taken.
+  static const MCPhysReg IntRegs[] = {Mips::A0_64, Mips::A1_64, Mips::A2_64,
+                                      Mips::A3_64};
+  static const MCPhysReg IntRegs32[] = {Mips::A0, Mips::A1, Mips::A2, Mips::A3};
+  static const MCPhysReg F32Regs[] = {Mips::F12, Mips::F13};
+  static const MCPhysReg F64Regs[] = {Mips::D12_64, Mips::D13_64};
+  constexpr unsigned NumArgSlots = 4;
+  constexpr unsigned SlotSize = 8;
+
+  const MipsSubtarget &Subtarget = static_cast<const MipsSubtarget &>(
+      State.getMachineFunction().getSubtarget());
+  const bool BigEndian = !Subtarget.isLittle();
+
+  // byval is handled by CC_Mips_ByVal before we get here.
+  if (ArgFlags.isByVal())
+    return true;
+
+  const MVT OrigLocVT = LocVT;
+  const bool IsNarrow = OrigLocVT.getStoreSize() < SlotSize;
+
+  // A float rides in the FPU only while it is one of the first two arguments
+  // and no integer register has been consumed yet. This is o32's rule, which
+  // o64 inherits: f(float, float, ...) puts both in the FPU, but
+  // f(int, float, ...) puts the float in a GPR.
+  const bool IsFloat = ValVT == MVT::f32 || ValVT == MVT::f64;
+  const bool UseFPU = IsFloat && !State.isVarArg() && ValNo < 2 &&
+                      State.getFirstUnallocated(F32Regs) == ValNo &&
+                      !Subtarget.useSoftFloat();
+
+  MCRegister Reg;
+  unsigned SlotIdx = NumArgSlots;
+
+  if (UseFPU) {
+    Reg = State.AllocateReg(ValVT == MVT::f32 ? F32Regs : F64Regs);
+    State.AllocateReg(IntRegs); // the slot is spoken for either way
+  } else if (MCRegister GPR = State.AllocateReg(IntRegs)) {
+    Reg = GPR;
+    for (unsigned I = 0; I != NumArgSlots; ++I)
+      if (IntRegs[I] == GPR.id()) {
+        SlotIdx = I;
+        break;
+      }
+  }
+
+  if (!Reg) {
+    // Stack. Slots are 8 bytes, but a narrow value occupies only the low 4
+    // bytes of its slot and the rest is left untouched: GCC emits `sw` at
+    // slot+4 for an int or a promoted short. So the location has to stay
+    // narrow. Widening it here would make the callee load 8 bytes and trust
+    // four bytes the caller never wrote.
+    unsigned Offset = State.AllocateStack(SlotSize, Align(SlotSize));
+    if (BigEndian && IsNarrow)
+      Offset += SlotSize - OrigLocVT.getStoreSize();
+    State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
+    return false;
+  }
+
+  if (UseFPU) {
+    State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+    return false;
+  }
+
+  if (ValVT == MVT::f32) {
+    // A float past the FPU slots travels in the low half of its slot's GPR.
+    Reg = IntRegs32[SlotIdx];
+    LocVT = MVT::i32;
+    LocInfo = CCValAssign::BCvt;
+  } else if (ValVT == MVT::f64) {
+    LocVT = MVT::i64;
+    LocInfo = CCValAssign::BCvt;
+  } else if (IsNarrow) {
+    // In a register the value fills the whole 64 bits. An ordinary scalar is
+    // sign- or zero-extended across it, but a piece of an aggregate sits in the
+    // top of the slot on big-endian, which is what CC_MipsN spells out as
+    // CCPromoteToUpperBitsInType.
+    const bool UpperBits = BigEndian && ArgFlags.isInReg();
+    LocVT = MVT::i64;
+    if (ArgFlags.isSExt())
+      LocInfo = UpperBits ? CCValAssign::SExtUpper : CCValAssign::SExt;
+    else if (ArgFlags.isZExt())
+      LocInfo = UpperBits ? CCValAssign::ZExtUpper : CCValAssign::ZExt;
+    else
+      LocInfo = UpperBits ? CCValAssign::AExtUpper : CCValAssign::AExt;
+  }
+
+  State.addLoc(CCValAssign::getReg(ValNo, ValVT, Reg, LocVT, LocInfo));
+  return false;
 }
 
 static bool CC_MipsO32(unsigned ValNo, MVT ValVT, MVT LocVT,

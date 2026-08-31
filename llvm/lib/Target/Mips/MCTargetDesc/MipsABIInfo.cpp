@@ -24,6 +24,10 @@ EmitJalrReloc("mips-jalr-reloc", cl::Hidden,
 namespace {
 static const MCPhysReg O32IntRegs[4] = {Mips::A0, Mips::A1, Mips::A2, Mips::A3};
 
+// o64 keeps o32's four argument slots, but each slot is a 64-bit register.
+static const MCPhysReg O64IntRegs[4] = {Mips::A0_64, Mips::A1_64,
+                                        Mips::A2_64, Mips::A3_64};
+
 static const MCPhysReg Mips64IntRegs[8] = {
     Mips::A0_64, Mips::A1_64, Mips::A2_64, Mips::A3_64,
     Mips::T0_64, Mips::T1_64, Mips::T2_64, Mips::T3_64};
@@ -32,12 +36,16 @@ static const MCPhysReg Mips64IntRegs[8] = {
 ArrayRef<MCPhysReg> MipsABIInfo::GetByValArgRegs() const {
   if (IsO32())
     return ArrayRef(O32IntRegs);
+  if (IsO64())
+    return ArrayRef(O64IntRegs);
   if (IsN32() || IsN64())
     return ArrayRef(Mips64IntRegs);
   llvm_unreachable("Unhandled ABI");
 }
 
 ArrayRef<MCPhysReg> MipsABIInfo::getVarArgRegs(bool isGP64bit) const {
+  if (IsO64())
+    return ArrayRef(O64IntRegs);
   if (IsO32()) {
     if (isGP64bit)
       return ArrayRef(Mips64IntRegs);
@@ -52,6 +60,9 @@ ArrayRef<MCPhysReg> MipsABIInfo::getVarArgRegs(bool isGP64bit) const {
 unsigned MipsABIInfo::GetCalleeAllocdArgSizeInBytes(CallingConv::ID CC) const {
   if (IsO32())
     return CC != CallingConv::Fast ? 16 : 0;
+  // Four 8-byte slots rather than o32's four 4-byte slots.
+  if (IsO64())
+    return CC != CallingConv::Fast ? 32 : 0;
   if (IsN32() || IsN64())
     return 0;
   llvm_unreachable("Unhandled ABI");
@@ -65,6 +76,8 @@ MipsABIInfo MipsABIInfo::computeTargetABI(const Triple &TT, StringRef CPU,
     return MipsABIInfo::N32();
   if (Options.getABIName().starts_with("n64"))
     return MipsABIInfo::N64();
+  if (Options.getABIName().starts_with("o64"))
+    return MipsABIInfo::O64();
   if (TT.isABIN32())
     return MipsABIInfo::N32();
   assert(Options.getABIName().empty() && "Unknown ABI option for MIPS");
@@ -126,5 +139,5 @@ unsigned MipsABIInfo::GetEhDataReg(unsigned I) const {
     Mips::A0_64, Mips::A1_64, Mips::A2_64, Mips::A3_64
   };
 
-  return IsN64() ? EhDataReg64[I] : EhDataReg[I];
+  return AreGprs64bit() ? EhDataReg64[I] : EhDataReg[I];
 }
