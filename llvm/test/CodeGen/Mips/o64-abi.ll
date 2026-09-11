@@ -3,6 +3,8 @@
 ; RUN: llc -mtriple=mips64-unknown-elf -mcpu=mips3 -target-abi=o64 \
 ; RUN:   -mattr=+noabicalls -relocation-model=static -filetype=obj < %s \
 ; RUN:   | llvm-readelf -h -A - | FileCheck %s --check-prefix=ELF
+; RUN: llc -mtriple=mips64-unknown-elf -mcpu=mips3 -target-abi=o64 \
+; RUN:   -relocation-model=pic < %s | FileCheck %s --check-prefix=PIC
 
 declare i64 @callee(i64)
 
@@ -26,6 +28,12 @@ define i64 @nonleaf(i64 %x) {
 ; CHECK:       sd $ra, 32($sp)
 ; CHECK:       ld $ra, 32($sp)
 ; CHECK:       addiu $sp, $sp, 40
+; PIC-LABEL:   nonleaf:
+; PIC:         lui $2, %hi(_gp_disp)
+; PIC:         addiu $2, $2, %lo(_gp_disp)
+; PIC:         addu $gp, $2, $25
+; PIC:         lw $25, %call16(callee)($gp)
+; PIC:         jalr $25
   %r = call i64 @callee(i64 %x)
   %s = add i64 %r, 1
   ret i64 %s

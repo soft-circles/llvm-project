@@ -129,10 +129,10 @@ void MipsFunctionInfo::initGlobalBaseReg(MachineFunction &MF) {
     return;
   }
 
-  assert(ABI.IsO32());
+  assert(ABI.IsO32() || ABI.IsO64());
 
-  // For O32 ABI, the following instruction sequence is emitted to initialize
-  // the global base register:
+  // For the O32 and O64 ABIs, the following instruction sequence is emitted
+  // to initialize the global base register:
   //
   //  0. lui   $2, %hi(_gp_disp)
   //  1. addiu $2, $2, %lo(_gp_disp)

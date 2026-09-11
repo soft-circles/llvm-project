@@ -943,7 +943,7 @@ bool MipsBranchExpansion::runOnMachineFunction(MachineFunction &MF) {
   STI = &MF.getSubtarget<MipsSubtarget>();
   TII = STI->getInstrInfo();
 
-  if (IsPIC && ABI.IsO32() &&
+  if (IsPIC && (ABI.IsO32() || ABI.IsO64()) &&
       MF.getInfo<MipsFunctionInfo>()->globalBaseRegSet())
     emitGPDisp(MF, TII);
 
