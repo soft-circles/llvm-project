@@ -60,7 +60,7 @@
 // RUN: %clang --target=mips64-linux-gnu -### -c %s \
 // RUN:        -mabi=o64 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-ABI-O64 %s
-// MIPS-ABI-O64: "-target-cpu" "mips64r2"
+// MIPS-ABI-O64: "-target-cpu" "mips3"
 // MIPS-ABI-O64: "-target-abi" "o64"
 //
 // RUN: not %clang --target=mips-linux-gnu -c %s \
