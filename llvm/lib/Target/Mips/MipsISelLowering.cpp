@@ -3201,7 +3201,6 @@ static bool CC_MipsO64(unsigned ValNo, MVT ValVT, MVT LocVT,
   static const MCPhysReg IntRegs32[] = {Mips::A0, Mips::A1, Mips::A2, Mips::A3};
   static const MCPhysReg F32Regs[] = {Mips::F12, Mips::F13};
   static const MCPhysReg F64Regs[] = {Mips::D12_64, Mips::D13_64};
-  constexpr unsigned NumArgSlots = 4;
   constexpr unsigned SlotSize = 8;
 
   const MipsSubtarget &Subtarget = static_cast<const MipsSubtarget &>(
@@ -3217,8 +3216,10 @@ static bool CC_MipsO64(unsigned ValNo, MVT ValVT, MVT LocVT,
 
   // Clang marks coerced aggregate pieces inreg.  On big-endian MIPS they are
   // left-justified in the 64-bit slot, even when type legalization has already
-  // widened (for example) i40 to i64.
-  const bool UseUpperBits = BigEndian && ArgFlags.isInReg();
+  // widened (for example) i40 to i64.  A floating-point piece is already a
+  // full slot, so it needs no widening.
+  const bool UseUpperBits =
+      BigEndian && ArgFlags.isInReg() && ValVT.isInteger();
   if (UseUpperBits) {
     LocVT = MVT::i64;
     if (ArgFlags.isSExt())
@@ -3232,25 +3233,21 @@ static bool CC_MipsO64(unsigned ValNo, MVT ValVT, MVT LocVT,
   // A float rides in the FPU only while it is one of the first two arguments
   // and no integer register has been consumed yet. This is o32's rule, which
   // o64 inherits: f(float, float, ...) puts both in the FPU, but
-  // f(int, float, ...) puts the float in a GPR.
+  // f(int, float, ...) puts the float in a GPR.  Aggregate pieces (inreg)
+  // always travel in GPRs, as GCC does for a struct holding a double.
   const bool IsFloat = ValVT == MVT::f32 || ValVT == MVT::f64;
-  const bool UseFPU = IsFloat && !State.isVarArg() && ValNo < 2 &&
-                      State.getFirstUnallocated(F32Regs) == ValNo &&
-                      !Subtarget.useSoftFloat();
+  const bool UseFPU =
+      IsFloat && !ArgFlags.isInReg() && !State.isVarArg() && ValNo < 2 &&
+      State.getFirstUnallocated(F32Regs) == ValNo && !Subtarget.useSoftFloat();
 
+  const unsigned SlotIdx = State.getFirstUnallocated(IntRegs);
   MCRegister Reg;
-  unsigned SlotIdx = NumArgSlots;
 
   if (UseFPU) {
     Reg = State.AllocateReg(ValVT == MVT::f32 ? F32Regs : F64Regs);
     State.AllocateReg(IntRegs); // the slot is spoken for either way
-  } else if (MCRegister GPR = State.AllocateReg(IntRegs)) {
-    Reg = GPR;
-    for (unsigned I = 0; I != NumArgSlots; ++I)
-      if (IntRegs[I] == GPR.id()) {
-        SlotIdx = I;
-        break;
-      }
+  } else {
+    Reg = State.AllocateReg(IntRegs);
   }
 
   if (!Reg) {
@@ -3258,8 +3255,6 @@ static bool CC_MipsO64(unsigned ValNo, MVT ValVT, MVT LocVT,
     // Aggregate fragments are widened above so their bytes remain at the
     // start of the slot and any-extension padding is discarded by the callee.
     unsigned Offset = State.AllocateStack(SlotSize, Align(SlotSize));
-    // Scalars occupy the low end of a big-endian slot.  An aggregate fragment
-    // stays at the start of the slot so its in-memory byte order is preserved.
     if (BigEndian && IsNarrow && !UseUpperBits)
       Offset += SlotSize - OrigLocVT.getStoreSize();
     State.addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));

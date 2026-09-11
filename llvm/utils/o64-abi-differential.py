@@ -31,6 +31,8 @@ struct S5 { u8 a, b, c, d, e; };
 struct S12 { u32 a, b, c; };
 struct Big { u32 a, b, c, d, e, f; };
 struct SF { float a, b; };
+struct SD { double d; };
+struct SDL { double d; long long l; };
 union U8 { u64 q; u32 w[2]; u8 b[8]; };
 
 #define FIELD(ret, name, params, expr) ret name params { return (expr); }
@@ -56,6 +58,12 @@ FIELD(u8, u8_b0, (union U8 u), u.b[0])
 FIELD(u8, u8_b7, (union U8 u), u.b[7])
 FIELD(float, sf_a, (struct SF s), s.a)
 FIELD(float, sf_b, (struct SF s), s.b)
+FIELD(double, sd_d, (struct SD s), s.d)
+FIELD(double, sd_after, (u32 x, struct SD s), s.d)
+FIELD(double, sdl_d, (struct SDL s), s.d)
+FIELD(u64, sdl_l, (struct SDL s), s.l)
+FIELD(double, cd_re, (_Complex double c), __real__ c)
+FIELD(double, cd_im, (_Complex double c), __imag__ c)
 
 double va_d0(int n, ...) {
   va_list a; va_start(a, n); double x = va_arg(a, double); va_end(a); return x;
@@ -322,12 +330,13 @@ def compile_asm(compiler, source, gcc):
 GPR_RETURNS = {
     "s3_a", "s3_b", "s3_c", "s3_after_c", "s3_edge_a", "s3_edge_c",
     "s3_stack_a", "s3_stack_c", "s5_a", "s5_e", "s12_a", "s12_b",
-    "s12_c", "s12_edge_c", "u8_q", "u8_w0", "u8_w1", "u8_b0", "u8_b7",
+    "s12_c", "s12_edge_c", "u8_q", "u8_w0", "u8_w1", "u8_b0", "u8_b7", "sdl_l",
     "va_i1", "va_l3", "ret_i8", "ret_u8", "ret_i16", "ret_u16",
     "ret_i32", "ret_u32", "ret_i64", "ret_ptr",
 }
 F32_RETURNS = {"sf_a", "sf_b", "ret_f32"}
-F64_RETURNS = {"va_d0", "va_d2", "va_named", "ret_f64"}
+F64_RETURNS = {"va_d0", "va_d2", "va_named", "ret_f64",
+               "sd_d", "sd_after", "sdl_d", "cd_re", "cd_im"}
 SRET_RETURNS = {"ret_s3", "ret_s12", "ret_big", "ret_u8_agg", "ret_sf"}
 CALLS = {"call_var", "call_named"}
 
@@ -353,8 +362,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--gcc", default=default_compiler(
         "MIPS_O64_GCC", "mips64-elf-gcc", Path.home() / "n64_toolchain/bin/mips64-elf-gcc"))
+    builds = [parent / "build/bin/clang" for parent in project.parents[:2]]
     parser.add_argument("--clang", default=os.environ.get("MIPS_O64_CLANG") or
-                        str(project.parent / "build/bin/clang"))
+                        str(next((b for b in builds if b.is_file()), builds[0])))
     args = parser.parse_args()
     for compiler in (args.gcc, args.clang):
         if not Path(compiler).is_file() and not shutil.which(compiler):
@@ -369,7 +379,7 @@ def main():
     groups = [
         ("aggregate arguments / big-endian packing",
          GPR_RETURNS - {n for n in GPR_RETURNS if n.startswith("ret_") or n.startswith("va_")}
-         | {"sf_a", "sf_b"}),
+         | {"sf_a", "sf_b", "sd_d", "sd_after", "sdl_d", "cd_re", "cd_im"}),
         ("mixed integer/FP varargs", {"va_d0", "va_i1", "va_d2", "va_l3", "va_named"}),
         ("scalar return locations", {n for n in GPR_RETURNS if n.startswith("ret_")}
          | {"ret_f32", "ret_f64"}),

@@ -145,11 +145,11 @@ void MipsABIInfo::CoerceToIntArgs(
 }
 
 // In N32/64, an aligned double precision floating point field is passed in
-// a register.
+// a register. O32 and O64 pass every aggregate through integer registers.
 llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty, uint64_t TySize) const {
   SmallVector<llvm::Type*, 8> ArgList, IntArgList;
 
-  if (IsO32) {
+  if (IsO32 || IsO64) {
     CoerceToIntArgs(TySize, ArgList);
     return llvm::StructType::get(getVMContext(), ArgList);
   }

@@ -61,6 +61,37 @@ define i32 @aggregate_i32_stack(i32 signext %a, i32 signext %b,
   ret i32 %tail
 }
 
+; Leading scalar floats take $f12 and $f13; a float after an integer rides in
+; that slot's GPR instead.
+define double @second_double(double %a, double %b) {
+; CHECK-LABEL: second_double:
+; CHECK:       mov.d $f0, $f13
+  ret double %b
+}
+
+define float @float_after_int(i32 signext %i, float %f) {
+; CHECK-LABEL: float_after_int:
+; CHECK:       mtc1 $5, $f0
+  ret float %f
+}
+
+; An aggregate piece stays in the GPR even when it holds a double.
+define double @double_inreg(double inreg %d) {
+; CHECK-LABEL: double_inreg:
+; CHECK:       dmtc1 $4, $f0
+  ret double %d
+}
+
+; The caller shifts a partial aggregate into the upper bits of its slot.
+declare void @take_i40(i40 inreg)
+
+define void @pass_i40(i40 %s) {
+; CHECK-LABEL: pass_i40:
+; CHECK:       dsll $4, $4, 24
+  call void @take_i40(i40 inreg %s)
+  ret void
+}
+
 ; ELF: Class: ELF32
 ; ELF: Data: 2's complement, big endian
 ; ELF: Flags: {{.*}}o64{{.*}}mips3
