@@ -776,19 +776,20 @@ bool MipsSEFrameLowering::spillCalleeSavedRegisters(
     // spilled to the stack frame.
     bool IsLOHI = (Reg == Mips::LO0 || Reg == Mips::LO0_64 ||
                    Reg == Mips::HI0 || Reg == Mips::HI0_64);
+    bool IsHI = Reg == Mips::HI0 || Reg == Mips::HI0_64;
     const Function &Func = MBB.getParent()->getFunction();
     if (IsLOHI && Func.hasFnAttribute("interrupt")) {
       DebugLoc DL = MI->getDebugLoc();
 
       unsigned Op = 0;
       if (!STI.getABI().ArePtrs64bit()) {
-        Op = (Reg == Mips::HI0) ? Mips::MFHI : Mips::MFLO;
+        Op = IsHI ? Mips::MFHI : Mips::MFLO;
         Reg = Mips::K0;
       } else {
-        Op = (Reg == Mips::HI0) ? Mips::MFHI64 : Mips::MFLO64;
+        Op = IsHI ? Mips::MFHI64 : Mips::MFLO64;
         Reg = Mips::K0_64;
       }
-      BuildMI(MBB, MI, DL, TII.get(Op), Mips::K0)
+      BuildMI(MBB, MI, DL, TII.get(Op), Reg)
           .setMIFlag(MachineInstr::FrameSetup);
     }
 
