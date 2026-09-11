@@ -602,7 +602,8 @@ class WindowsMipsAsmBackend : public MipsAsmBackend {
 public:
   WindowsMipsAsmBackend(const Target &T, const MCRegisterInfo &MRI,
                         const MCSubtargetInfo &STI)
-      : MipsAsmBackend(T, MRI, STI.getTargetTriple(), STI.getCPU(), false) {}
+      : MipsAsmBackend(T, MRI, STI.getTargetTriple(), STI.getCPU(), false,
+                       false) {}
 
   std::unique_ptr<MCObjectTargetWriter>
   createObjectTargetWriter() const override {

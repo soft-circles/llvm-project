@@ -32,7 +32,7 @@ class MipsAsmBackend : public MCAsmBackend {
 
 public:
   MipsAsmBackend(const Target &T, const MCRegisterInfo &MRI, const Triple &TT,
-                 StringRef CPU, bool N32, bool O64 = false)
+                 StringRef CPU, bool N32, bool O64)
       : MCAsmBackend(TT.isLittleEndian() ? llvm::endianness::little
                                          : llvm::endianness::big),
         TheTriple(TT), IsN32(N32), IsO64(O64) {}

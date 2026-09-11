@@ -26,10 +26,14 @@ MipsELFMCAsmInfo::MipsELFMCAsmInfo(const Triple &TheTriple,
 
   MipsABIInfo ABI = MipsABIInfo::computeTargetABI(TheTriple, "", Options);
 
-  if (TheTriple.isMIPS64() && !ABI.IsN32())
-    CodePointerSize = CalleeSaveStackSlotSize = 8;
+  if (TheTriple.isMIPS64() && !ABI.IsN32()) {
+    CalleeSaveStackSlotSize = 8;
+    // o64 has 64-bit registers but 32-bit pointers in an ELF32 object.
+    if (!ABI.IsO64())
+      CodePointerSize = 8;
+  }
 
-  if (ABI.IsO32())
+  if (ABI.IsO32() || ABI.IsO64())
     PrivateGlobalPrefix = "$";
   else if (ABI.IsN32() || ABI.IsN64())
     PrivateGlobalPrefix = ".L";
