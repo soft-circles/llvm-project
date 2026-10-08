@@ -253,9 +253,9 @@ define void @ret_struct_128xi16(ptr sret({[128 x i16]}) %returnval) {
 ; N32-NEXT:    sd $16, 0($sp) # 8-byte Folded Spill
 ; N32-NEXT:    .cfi_offset 31, -8
 ; N32-NEXT:    .cfi_offset 16, -16
+; N32-NEXT:    move $16, $4
 ; N32-NEXT:    lui $1, %hi(struct_128xi16)
 ; N32-NEXT:    addiu $5, $1, %lo(struct_128xi16)
-; N32-NEXT:    sll $16, $4, 0
 ; N32-NEXT:    jal memcpy
 ; N32-NEXT:    daddiu $6, $zero, 256
 ; N32-NEXT:    move $2, $16
