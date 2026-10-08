@@ -3439,6 +3439,32 @@ void MipsTargetLowering::AdjustInstrPostInstrSelection(MachineInstr &MI,
   }
 }
 
+/// The opcode that widens an outgoing argument the calling convention marked
+/// AExt.
+///
+/// N32 and O64 pass 32-bit pointers in 64-bit GPRs. The MIPS64 ABIs keep every
+/// 32-bit value there sign-extended, pointers included: GCC relies on it, and a
+/// 32-bit KSEG0 address such as 0x80001000 only names the same location as
+/// 0xffffffff80001000. IR pointers cannot carry signext, so the convention
+/// assigns them AExt, and an any-extend lets the DAG combiner fold
+/// (anyext (trunc (srl x, 32))) into a bare dsrl32 that zero-extends the
+/// pointer. Widen pointers with a sign extension instead, except for symbol
+/// and stack addresses: 32-bit instructions build those (lui/addiu, a lw from
+/// the GOT, an addiu from $sp), and their results are already sign-extended.
+static unsigned getAExtOpcode(const ISD::ArgFlagsTy &Flags, SDValue Arg) {
+  if (!Flags.isPointer())
+    return ISD::ANY_EXTEND;
+  switch (Arg.getOpcode()) {
+  case ISD::GlobalAddress:
+  case ISD::ExternalSymbol:
+  case ISD::BlockAddress:
+  case ISD::FrameIndex:
+    return ISD::ANY_EXTEND;
+  default:
+    return ISD::SIGN_EXTEND;
+  }
+}
+
 /// LowerCall - functions arguments are copied from virtual regs to
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
 SDValue
@@ -3624,7 +3650,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       UseUpperBits = true;
       [[fallthrough]];
     case CCValAssign::AExt:
-      Arg = DAG.getNode(ISD::ANY_EXTEND, DL, LocVT, Arg);
+      Arg = DAG.getNode(getAExtOpcode(Flags, Arg), DL, LocVT, Arg);
       break;
     }
 
@@ -3981,6 +4007,14 @@ SDValue MipsTargetLowering::LowerFormalArguments(
       // physical registers into virtual ones
       unsigned Reg = addLiveIn(DAG.getMachineFunction(), ArgReg, RC);
       SDValue ArgValue = DAG.getCopyFromReg(Chain, DL, Reg, RegVT);
+
+      // Callers sign-extend 32-bit pointers in 64-bit GPRs (see
+      // getAExtOpcode), so a pointer that is passed on needs no new extension.
+      // A stack slot gets no such assertion: O64 callers store only its low
+      // word.
+      if (VA.getLocInfo() == CCValAssign::AExt && Flags.isPointer())
+        ArgValue = DAG.getNode(ISD::AssertSext, DL, RegVT, ArgValue,
+                               DAG.getValueType(ValVT));
 
       ArgValue =
           UnpackFromArgumentSlot(ArgValue, VA, Ins[InsIdx].ArgVT, DL, DAG);

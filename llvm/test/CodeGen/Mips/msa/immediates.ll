@@ -20,11 +20,10 @@ define void @addvi_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: addvi_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    addvi.b $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.addvi.b(<16 x i8> %a, i32 25)
@@ -42,11 +41,10 @@ define void @andi_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: andi_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    andi.b $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.andi.b(<16 x i8> %a, i32 25)
@@ -64,11 +62,10 @@ define void @bclri_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bclri_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    andi.b $w0, $w0, 247
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.bclri.b(<16 x i8> %a, i32 3)
@@ -87,13 +84,11 @@ define void @binsli_b(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: binsli_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($2)
-; MSA64N32-NEXT:    ld.b $w1, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($5)
+; MSA64N32-NEXT:    ld.b $w1, 0($4)
 ; MSA64N32-NEXT:    binsli.b $w1, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w1, 0($1)
+; MSA64N32-NEXT:    st.b $w1, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %b = load <16 x i8>, ptr %ptr2, align 16
@@ -113,13 +108,11 @@ define void @binsri_b(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: binsri_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($2)
-; MSA64N32-NEXT:    ld.b $w1, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($5)
+; MSA64N32-NEXT:    ld.b $w1, 0($4)
 ; MSA64N32-NEXT:    binsri.b $w1, $w0, 5
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w1, 0($1)
+; MSA64N32-NEXT:    st.b $w1, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %b = load <16 x i8>, ptr %ptr2, align 16
@@ -139,13 +132,11 @@ define void @bmnzi_b(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: bmnzi_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($2)
-; MSA64N32-NEXT:    ld.b $w1, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($5)
+; MSA64N32-NEXT:    ld.b $w1, 0($4)
 ; MSA64N32-NEXT:    bmnzi.b $w1, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w1, 0($1)
+; MSA64N32-NEXT:    st.b $w1, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %b = load <16 x i8>, ptr %ptr2, align 16
@@ -165,13 +156,11 @@ define void @bmzi_b(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: bmzi_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $5, 0
-; MSA64N32-NEXT:    sll $2, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($2)
-; MSA64N32-NEXT:    ld.b $w1, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
+; MSA64N32-NEXT:    ld.b $w1, 0($5)
 ; MSA64N32-NEXT:    bmnzi.b $w1, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w1, 0($2)
+; MSA64N32-NEXT:    st.b $w1, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %b = load <16 x i8>, ptr %ptr2, align 16
@@ -190,11 +179,10 @@ define void @bnegi_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bnegi_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    bnegi.b $w0, $w0, 6
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.bnegi.b(<16 x i8> %a, i32 6)
@@ -212,11 +200,10 @@ define void @bseli_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bseli_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    bseli.b $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.bseli.b(<16 x i8> %a, <16 x i8> %a, i32 25)
@@ -234,11 +221,10 @@ define void @bseti_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bseti_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    bseti.b $w0, $w0, 5
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.bseti.b(<16 x i8> %a, i32 5)
@@ -256,11 +242,10 @@ define void @clei_s_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clei_s_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    clei_s.b $w0, $w0, 12
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.clei.s.b(<16 x i8> %a, i32 12)
@@ -278,11 +263,10 @@ define void @clei_u_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clei_u_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    clei_u.b $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.clei.u.b(<16 x i8> %a, i32 25)
@@ -300,11 +284,10 @@ define void @clti_s_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clti_s_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    clti_s.b $w0, $w0, 15
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.clti.s.b(<16 x i8> %a, i32 15)
@@ -322,11 +305,10 @@ define void @clti_u_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clti_u_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    clti_u.b $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.clti.u.b(<16 x i8> %a, i32 25)
@@ -343,10 +325,9 @@ define void @ldi_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: ldi_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
 ; MSA64N32-NEXT:    ldi.b $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %r = call <16 x i8> @llvm.mips.ldi.b(i32 3)
   store <16 x i8> %r, ptr %ptr, align 16
@@ -363,11 +344,10 @@ define void @maxi_s_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: maxi_s_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    maxi_s.b $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.maxi.s.b(<16 x i8> %a, i32 2)
@@ -385,11 +365,10 @@ define void @maxi_u_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: maxi_u_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    maxi_u.b $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.maxi.u.b(<16 x i8> %a, i32 2)
@@ -407,11 +386,10 @@ define void @mini_s_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: mini_s_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    mini_s.b $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.mini.s.b(<16 x i8> %a, i32 2)
@@ -429,11 +407,10 @@ define void @mini_u_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: mini_u_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    mini_u.b $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.mini.u.b(<16 x i8> %a, i32 2)
@@ -451,11 +428,10 @@ define void @nori_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: nori_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    nori.b $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.nori.b(<16 x i8> %a, i32 25)
@@ -473,11 +449,10 @@ define void @ori_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: ori_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    ori.b $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.ori.b(<16 x i8> %a, i32 25)
@@ -495,11 +470,10 @@ define void @sldi_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: sldi_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    sldi.b $w0, $w0[7]
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.sldi.b(<16 x i8> %a, <16 x i8> %a, i32 7)
@@ -517,11 +491,10 @@ define void @slli_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: slli_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    slli.b $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.slli.b(<16 x i8> %a, i32 3)
@@ -539,11 +512,10 @@ define void @splati_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: splati_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    splati.b $w0, $w0[3]
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.splati.b(<16 x i8> %a, i32 3)
@@ -561,11 +533,10 @@ define void @srai_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srai_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    srai.b $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.srai.b(<16 x i8> %a, i32 3)
@@ -583,11 +554,10 @@ define void @srari_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srari_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    srari.b $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.srari.b(<16 x i8> %a, i32 3)
@@ -605,11 +575,10 @@ define void @srli_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srli_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    srli.b $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.srli.b(<16 x i8> %a, i32 3)
@@ -627,11 +596,10 @@ define void @srlri_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srlri_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    srlri.b $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.b $w0, 0($1)
+; MSA64N32-NEXT:    st.b $w0, 0($4)
 entry:
   %a = load <16 x i8>, ptr %ptr, align 16
   %r = call <16 x i8> @llvm.mips.srlri.b(<16 x i8> %a, i32 3)
@@ -649,11 +617,10 @@ define void @addvi_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: addvi_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    addvi.w $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.addvi.w(<4 x i32> %a, i32 25)
@@ -671,11 +638,10 @@ define void @bclri_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bclri_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    bclri.w $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.bclri.w(<4 x i32> %a, i32 25)
@@ -694,13 +660,11 @@ define void @binsli_w(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: binsli_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($2)
-; MSA64N32-NEXT:    ld.w $w1, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($5)
+; MSA64N32-NEXT:    ld.w $w1, 0($4)
 ; MSA64N32-NEXT:    binsli.w $w1, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w1, 0($1)
+; MSA64N32-NEXT:    st.w $w1, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %b = load <4 x i32>, ptr %ptr2, align 16
@@ -720,13 +684,11 @@ define void @binsri_w(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: binsri_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($2)
-; MSA64N32-NEXT:    ld.w $w1, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($5)
+; MSA64N32-NEXT:    ld.w $w1, 0($4)
 ; MSA64N32-NEXT:    binsri.w $w1, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w1, 0($1)
+; MSA64N32-NEXT:    st.w $w1, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %b = load <4 x i32>, ptr %ptr2, align 16
@@ -745,11 +707,10 @@ define void @bnegi_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bnegi_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    bnegi.w $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.bnegi.w(<4 x i32> %a, i32 25)
@@ -767,11 +728,10 @@ define void @bseti_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bseti_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    bseti.w $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.bseti.w(<4 x i32> %a, i32 25)
@@ -789,11 +749,10 @@ define void @clei_s_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clei_s_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    clei_s.w $w0, $w0, 14
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.clei.s.w(<4 x i32> %a, i32 14)
@@ -811,11 +770,10 @@ define void @clei_u_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clei_u_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    clei_u.w $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.clei.u.w(<4 x i32> %a, i32 25)
@@ -833,11 +791,10 @@ define void @clti_s_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clti_s_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    clti_s.w $w0, $w0, 15
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.clti.s.w(<4 x i32> %a, i32 15)
@@ -855,11 +812,10 @@ define void @clti_u_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clti_u_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    clti_u.w $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.clti.u.w(<4 x i32> %a, i32 25)
@@ -877,11 +833,10 @@ define void @maxi_s_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: maxi_s_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    maxi_s.w $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.maxi.s.w(<4 x i32> %a, i32 2)
@@ -899,11 +854,10 @@ define void @maxi_u_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: maxi_u_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    maxi_u.w $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.maxi.u.w(<4 x i32> %a, i32 2)
@@ -921,11 +875,10 @@ define void @mini_s_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: mini_s_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    mini_s.w $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.mini.s.w(<4 x i32> %a, i32 2)
@@ -943,11 +896,10 @@ define void @mini_u_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: mini_u_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    mini_u.w $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.mini.u.w(<4 x i32> %a, i32 2)
@@ -964,10 +916,9 @@ define void @ldi_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: ldi_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
 ; MSA64N32-NEXT:    ldi.w $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %r = call <4 x i32> @llvm.mips.ldi.w(i32 3)
   store <4 x i32> %r, ptr %ptr, align 16
@@ -984,11 +935,10 @@ define void @sldi_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: sldi_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    sldi.w $w0, $w0[2]
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.sldi.w(<4 x i32> %a, <4 x i32> %a, i32 2)
@@ -1006,11 +956,10 @@ define void @slli_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: slli_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    slli.w $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.slli.w(<4 x i32> %a, i32 3)
@@ -1028,11 +977,10 @@ define void @splati_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: splati_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    splati.w $w0, $w0[3]
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.splati.w(<4 x i32> %a, i32 3)
@@ -1050,11 +998,10 @@ define void @srai_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srai_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    srai.w $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.srai.w(<4 x i32> %a, i32 3)
@@ -1072,11 +1019,10 @@ define void @srari_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srari_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    srari.w $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.srari.w(<4 x i32> %a, i32 3)
@@ -1094,11 +1040,10 @@ define void @srli_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srli_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    srli.w $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.srli.w(<4 x i32> %a, i32 3)
@@ -1116,11 +1061,10 @@ define void @srlri_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srlri_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    srlri.w $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.w $w0, 0($1)
+; MSA64N32-NEXT:    st.w $w0, 0($4)
 entry:
   %a = load <4 x i32>, ptr %ptr, align 16
   %r = call <4 x i32> @llvm.mips.srlri.w(<4 x i32> %a, i32 3)
@@ -1138,11 +1082,10 @@ define void @addvi_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: addvi_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    addvi.h $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.addvi.h(<8 x i16> %a, i32 25)
@@ -1160,11 +1103,10 @@ define void @bclri_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bclri_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    bclri.h $w0, $w0, 8
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.bclri.h(<8 x i16> %a, i32 8)
@@ -1183,13 +1125,11 @@ define void @binsli_h(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: binsli_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($2)
-; MSA64N32-NEXT:    ld.h $w1, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($5)
+; MSA64N32-NEXT:    ld.h $w1, 0($4)
 ; MSA64N32-NEXT:    binsli.h $w1, $w0, 8
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w1, 0($1)
+; MSA64N32-NEXT:    st.h $w1, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %b = load <8 x i16>, ptr %ptr2, align 16
@@ -1209,13 +1149,11 @@ define void @binsri_h(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: binsri_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($2)
-; MSA64N32-NEXT:    ld.h $w1, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($5)
+; MSA64N32-NEXT:    ld.h $w1, 0($4)
 ; MSA64N32-NEXT:    binsri.h $w1, $w0, 14
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w1, 0($1)
+; MSA64N32-NEXT:    st.h $w1, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %b = load <8 x i16>, ptr %ptr2, align 16
@@ -1234,11 +1172,10 @@ define void @bnegi_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bnegi_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    bnegi.h $w0, $w0, 14
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.bnegi.h(<8 x i16> %a, i32 14)
@@ -1256,11 +1193,10 @@ define void @bseti_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bseti_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    bseti.h $w0, $w0, 15
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.bseti.h(<8 x i16> %a, i32 15)
@@ -1278,11 +1214,10 @@ define void @clei_s_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clei_s_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    clei_s.h $w0, $w0, 13
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.clei.s.h(<8 x i16> %a, i32 13)
@@ -1300,11 +1235,10 @@ define void @clei_u_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clei_u_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    clei_u.h $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.clei.u.h(<8 x i16> %a, i32 25)
@@ -1322,11 +1256,10 @@ define void @clti_s_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clti_s_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    clti_s.h $w0, $w0, 15
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.clti.s.h(<8 x i16> %a, i32 15)
@@ -1344,11 +1277,10 @@ define void @clti_u_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clti_u_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    clti_u.h $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.clti.u.h(<8 x i16> %a, i32 25)
@@ -1366,11 +1298,10 @@ define void @maxi_s_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: maxi_s_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    maxi_s.h $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.maxi.s.h(<8 x i16> %a, i32 2)
@@ -1388,11 +1319,10 @@ define void @maxi_u_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: maxi_u_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    maxi_u.h $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.maxi.u.h(<8 x i16> %a, i32 2)
@@ -1410,11 +1340,10 @@ define void @mini_s_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: mini_s_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    mini_s.h $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.mini.s.h(<8 x i16> %a, i32 2)
@@ -1432,11 +1361,10 @@ define void @mini_u_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: mini_u_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    mini_u.h $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.mini.u.h(<8 x i16> %a, i32 2)
@@ -1453,10 +1381,9 @@ define void @ldi_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: ldi_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
 ; MSA64N32-NEXT:    ldi.h $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %r = call <8 x i16> @llvm.mips.ldi.h(i32 3)
   store <8 x i16> %r, ptr %ptr, align 16
@@ -1473,11 +1400,10 @@ define void @sldi_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: sldi_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    sldi.h $w0, $w0[3]
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.sldi.h(<8 x i16> %a, <8 x i16> %a, i32 3)
@@ -1495,11 +1421,10 @@ define void @slli_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: slli_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    slli.h $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.slli.h(<8 x i16> %a, i32 3)
@@ -1517,11 +1442,10 @@ define void @splati_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: splati_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    splati.h $w0, $w0[3]
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.splati.h(<8 x i16> %a, i32 3)
@@ -1539,11 +1463,10 @@ define void @srai_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srai_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    srai.h $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.srai.h(<8 x i16> %a, i32 3)
@@ -1561,11 +1484,10 @@ define void @srari_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srari_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    srari.h $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.srari.h(<8 x i16> %a, i32 3)
@@ -1583,11 +1505,10 @@ define void @srli_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srli_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    srli.h $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.srli.h(<8 x i16> %a, i32 3)
@@ -1605,11 +1526,10 @@ define void @srlri_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srlri_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    srlri.h $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.h $w0, 0($1)
+; MSA64N32-NEXT:    st.h $w0, 0($4)
 entry:
   %a = load <8 x i16>, ptr %ptr, align 16
   %r = call <8 x i16> @llvm.mips.srlri.h(<8 x i16> %a, i32 3)
@@ -1626,8 +1546,7 @@ define i32 @copy_s_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: copy_s_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    jr $ra
 ; MSA64N32-NEXT:    copy_s.b $2, $w0[1]
 entry:
@@ -1644,8 +1563,7 @@ define i32 @copy_s_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: copy_s_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    jr $ra
 ; MSA64N32-NEXT:    copy_s.h $2, $w0[1]
 entry:
@@ -1662,8 +1580,7 @@ define i32 @copy_s_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: copy_s_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    jr $ra
 ; MSA64N32-NEXT:    copy_s.w $2, $w0[1]
 entry:
@@ -1680,8 +1597,7 @@ define i32 @copy_u_b(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: copy_u_b:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.b $w0, 0($1)
+; MSA64N32-NEXT:    ld.b $w0, 0($4)
 ; MSA64N32-NEXT:    jr $ra
 ; MSA64N32-NEXT:    copy_u.b $2, $w0[1]
 entry:
@@ -1698,8 +1614,7 @@ define i32 @copy_u_h(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: copy_u_h:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.h $w0, 0($1)
+; MSA64N32-NEXT:    ld.h $w0, 0($4)
 ; MSA64N32-NEXT:    jr $ra
 ; MSA64N32-NEXT:    copy_u.h $2, $w0[1]
 entry:
@@ -1716,8 +1631,7 @@ define i32 @copy_u_w(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: copy_u_w:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.w $w0, 0($1)
+; MSA64N32-NEXT:    ld.w $w0, 0($4)
 ; MSA64N32-NEXT:    jr $ra
 ; MSA64N32-NEXT:    copy_u.w $2, $w0[1]
 ;
@@ -1742,8 +1656,7 @@ define i64 @copy_s_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: copy_s_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    jr $ra
 ; MSA64N32-NEXT:    copy_s.d $2, $w0[1]
 ;
@@ -1768,8 +1681,7 @@ define i64 @copy_u_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: copy_u_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    jr $ra
 ; MSA64N32-NEXT:    copy_s.d $2, $w0[1]
 ;
@@ -1794,11 +1706,10 @@ define void @addvi_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: addvi_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    addvi.d $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.addvi.d(<2 x i64> %a, i32 25)
@@ -1816,11 +1727,10 @@ define void @bclri_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bclri_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    bclri.d $w0, $w0, 16
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.bclri.d(<2 x i64> %a, i32 16)
@@ -1839,13 +1749,11 @@ define void @binsli_d(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: binsli_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($2)
-; MSA64N32-NEXT:    ld.d $w1, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($5)
+; MSA64N32-NEXT:    ld.d $w1, 0($4)
 ; MSA64N32-NEXT:    binsli.d $w1, $w0, 4
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w1, 0($1)
+; MSA64N32-NEXT:    st.d $w1, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %b = load <2 x i64>, ptr %ptr2, align 16
@@ -1865,13 +1773,11 @@ define void @binsri_d(ptr %ptr, ptr %ptr2) {
 ;
 ; MSA64N32-LABEL: binsri_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($2)
-; MSA64N32-NEXT:    ld.d $w1, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($5)
+; MSA64N32-NEXT:    ld.d $w1, 0($4)
 ; MSA64N32-NEXT:    binsri.d $w1, $w0, 5
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w1, 0($1)
+; MSA64N32-NEXT:    st.d $w1, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %b = load <2 x i64>, ptr %ptr2, align 16
@@ -1890,11 +1796,10 @@ define void @bnegi_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bnegi_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    bnegi.d $w0, $w0, 9
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.bnegi.d(<2 x i64> %a, i32 9)
@@ -1912,11 +1817,10 @@ define void @bseti_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: bseti_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    bseti.d $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.bseti.d(<2 x i64> %a, i32 25)
@@ -1934,11 +1838,10 @@ define void @clei_s_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clei_s_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    clei_s.d $w0, $w0, 15
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.clei.s.d(<2 x i64> %a, i32 15)
@@ -1956,11 +1859,10 @@ define void @clei_u_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clei_u_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    clei_u.d $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.clei.u.d(<2 x i64> %a, i32 25)
@@ -1978,11 +1880,10 @@ define void @clti_s_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clti_s_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    clti_s.d $w0, $w0, 15
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.clti.s.d(<2 x i64> %a, i32 15)
@@ -2000,11 +1901,10 @@ define void @clti_u_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: clti_u_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    clti_u.d $w0, $w0, 25
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.clti.u.d(<2 x i64> %a, i32 25)
@@ -2021,10 +1921,9 @@ define void @ldi_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: ldi_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
 ; MSA64N32-NEXT:    ldi.d $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 ;
 ; MSA64N64-LABEL: ldi_d:
 ; MSA64N64:       # %bb.0: # %entry
@@ -2047,11 +1946,10 @@ define void @maxi_s_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: maxi_s_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    maxi_s.d $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.maxi.s.d(<2 x i64> %a, i32 2)
@@ -2069,11 +1967,10 @@ define void @maxi_u_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: maxi_u_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    maxi_u.d $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.maxi.u.d(<2 x i64> %a, i32 2)
@@ -2091,11 +1988,10 @@ define void @mini_s_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: mini_s_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    mini_s.d $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.mini.s.d(<2 x i64> %a, i32 2)
@@ -2113,11 +2009,10 @@ define void @mini_u_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: mini_u_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    mini_u.d $w0, $w0, 2
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.mini.u.d(<2 x i64> %a, i32 2)
@@ -2135,11 +2030,10 @@ define void @sldi_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: sldi_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    sldi.d $w0, $w0[1]
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.sldi.d(<2 x i64> %a, <2 x i64> %a, i32 1)
@@ -2157,11 +2051,10 @@ define void @slli_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: slli_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    slli.d $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.slli.d(<2 x i64> %a, i32 3)
@@ -2179,11 +2072,10 @@ define void @srai_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srai_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    srai.d $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.srai.d(<2 x i64> %a, i32 3)
@@ -2201,11 +2093,10 @@ define void @srari_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srari_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    srari.d $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.srari.d(<2 x i64> %a, i32 3)
@@ -2223,11 +2114,10 @@ define void @srli_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srli_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    srli.d $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.srli.d(<2 x i64> %a, i32 3)
@@ -2245,11 +2135,10 @@ define void @srlri_d(ptr %ptr) {
 ;
 ; MSA64N32-LABEL: srlri_d:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    ld.d $w0, 0($1)
+; MSA64N32-NEXT:    ld.d $w0, 0($4)
 ; MSA64N32-NEXT:    srlri.d $w0, $w0, 3
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 entry:
   %a = load <2 x i64>, ptr %ptr, align 16
   %r = call <2 x i64> @llvm.mips.srlri.d(<2 x i64> %a, i32 3)
@@ -2267,12 +2156,10 @@ define void @ld_d2(ptr %ptr, ptr %ldptr) {
 ;
 ; MSA64N32-LABEL: ld_d2:
 ; MSA64N32:       # %bb.0: # %entry
-; MSA64N32-NEXT:    sll $1, $4, 0
-; MSA64N32-NEXT:    sll $2, $5, 0
-; MSA64N32-NEXT:    addiu $2, $2, 4096
-; MSA64N32-NEXT:    ld.d $w0, 0($2)
+; MSA64N32-NEXT:    addiu $1, $5, 4096
+; MSA64N32-NEXT:    ld.d $w0, 0($1)
 ; MSA64N32-NEXT:    jr $ra
-; MSA64N32-NEXT:    st.d $w0, 0($1)
+; MSA64N32-NEXT:    st.d $w0, 0($4)
 ;
 ; MSA64N64-LABEL: ld_d2:
 ; MSA64N64:       # %bb.0: # %entry
