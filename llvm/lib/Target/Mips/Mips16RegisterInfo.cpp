@@ -64,7 +64,7 @@ Mips16RegisterInfo::intRegClass(unsigned Size) const {
 void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
                                      unsigned OpNo, int FrameIndex,
                                      uint64_t StackSize,
-                                     int64_t SPOffset) const {
+                                     int64_t SPOffset, int SPAdj) const {
   MachineInstr &MI = *II;
   MachineFunction &MF = *MI.getParent()->getParent();
   MachineFrameInfo &MFI = MF.getFrameInfo();
@@ -114,6 +114,12 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
   bool IsKill = false;
   Offset = SPOffset + (int64_t)StackSize;
   Offset += MI.getOperand(OpNo + 1).getImm();
+
+  // Inside a call sequence of a function without a reserved call frame, $sp
+  // has already been moved down by the outgoing argument area, so objects
+  // addressed through $sp are SPAdj bytes further away.
+  if (FrameReg == Mips::SP)
+    Offset += SPAdj;
 
   LLVM_DEBUG(errs() << "Offset     : " << Offset << "\n"
                     << "<--------->\n");
