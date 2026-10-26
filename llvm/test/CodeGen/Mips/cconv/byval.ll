@@ -64,16 +64,26 @@ define dso_local void @g() #0 {
 ; O32-NEXT:    .cfi_offset 31, -4
 ; O32-NEXT:    ori $1, $zero, 65520
 ; O32-NEXT:    subu $sp, $sp, $1
-; O32-NEXT:    addiu $1, $sp, 8
+; O32-NEXT:    lui $1, 1
+; O32-NEXT:    addu $1, $sp, $1
+; O32-NEXT:    addiu $1, $1, -8
 ; O32-NEXT:    addiu $5, $1, 16
 ; O32-NEXT:    addiu $4, $sp, 16
 ; O32-NEXT:    jal memcpy
 ; O32-NEXT:    ori $6, $zero, 65504
-; O32-NEXT:    lw $7, 20($sp)
-; O32-NEXT:    lw $6, 16($sp)
-; O32-NEXT:    lw $5, 12($sp)
+; O32-NEXT:    lui $1, 1
+; O32-NEXT:    addu $1, $sp, $1
+; O32-NEXT:    lw $7, 4($1)
+; O32-NEXT:    lui $1, 1
+; O32-NEXT:    addu $1, $sp, $1
+; O32-NEXT:    lw $6, 0($1)
+; O32-NEXT:    lui $1, 1
+; O32-NEXT:    addu $1, $sp, $1
+; O32-NEXT:    lw $5, -4($1)
+; O32-NEXT:    lui $1, 1
+; O32-NEXT:    addu $1, $sp, $1
 ; O32-NEXT:    jal f2
-; O32-NEXT:    lw $4, 8($sp)
+; O32-NEXT:    lw $4, -8($1)
 ; O32-NEXT:    ori $1, $zero, 65520
 ; O32-NEXT:    addu $sp, $sp, $1
 ; O32-NEXT:    lui $1, 1
@@ -99,15 +109,31 @@ define dso_local void @g() #0 {
 ; N32-NEXT:    sll $4, $sp, 0
 ; N32-NEXT:    jal memcpy
 ; N32-NEXT:    ori $6, $zero, 65456
-; N32-NEXT:    ld $11, 64($sp)
-; N32-NEXT:    ld $10, 56($sp)
-; N32-NEXT:    ld $9, 48($sp)
-; N32-NEXT:    ld $8, 40($sp)
-; N32-NEXT:    ld $7, 32($sp)
-; N32-NEXT:    ld $6, 24($sp)
-; N32-NEXT:    ld $5, 16($sp)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $11, -16($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $10, -24($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $9, -32($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $8, -40($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $7, -48($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $6, -56($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $5, -64($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
 ; N32-NEXT:    jal f2
-; N32-NEXT:    ld $4, 8($sp)
+; N32-NEXT:    ld $4, -72($1)
 ; N32-NEXT:    ori $1, $zero, 65456
 ; N32-NEXT:    addu $sp, $sp, $1
 ; N32-NEXT:    lui $1, 1
@@ -128,20 +154,38 @@ define dso_local void @g() #0 {
 ; N64-NEXT:    .cfi_offset 31, -8
 ; N64-NEXT:    ori $1, $zero, 65456
 ; N64-NEXT:    dsubu $sp, $sp, $1
-; N64-NEXT:    daddiu $1, $sp, 8
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    daddiu $1, $1, -72
 ; N64-NEXT:    daddiu $5, $1, 64
 ; N64-NEXT:    ori $6, $zero, 65456
 ; N64-NEXT:    jal memcpy
 ; N64-NEXT:    move $4, $sp
-; N64-NEXT:    ld $11, 64($sp)
-; N64-NEXT:    ld $10, 56($sp)
-; N64-NEXT:    ld $9, 48($sp)
-; N64-NEXT:    ld $8, 40($sp)
-; N64-NEXT:    ld $7, 32($sp)
-; N64-NEXT:    ld $6, 24($sp)
-; N64-NEXT:    ld $5, 16($sp)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $11, -16($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $10, -24($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $9, -32($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $8, -40($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $7, -48($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $6, -56($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $5, -64($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
 ; N64-NEXT:    jal f2
-; N64-NEXT:    ld $4, 8($sp)
+; N64-NEXT:    ld $4, -72($1)
 ; N64-NEXT:    ori $1, $zero, 65456
 ; N64-NEXT:    daddu $sp, $sp, $1
 ; N64-NEXT:    lui $1, 1
@@ -211,7 +255,7 @@ define dso_local void @g2(ptr %a) {
 ; O32-NEXT:    addu $1, $sp, $1
 ; O32-NEXT:    sw $4, -4($1)
 ; O32-NEXT:    addiu $sp, $sp, -16
-; O32-NEXT:    addiu $16, $sp, 8
+; O32-NEXT:    addiu $16, $sp, 24
 ; O32-NEXT:    ori $6, $zero, 65520
 ; O32-NEXT:    jal memcpy
 ; O32-NEXT:    move $4, $16
@@ -222,11 +266,19 @@ define dso_local void @g2(ptr %a) {
 ; O32-NEXT:    addiu $4, $sp, 16
 ; O32-NEXT:    jal memcpy
 ; O32-NEXT:    ori $6, $zero, 65504
-; O32-NEXT:    lw $7, 20($sp)
-; O32-NEXT:    lw $6, 16($sp)
-; O32-NEXT:    lw $5, 12($sp)
+; O32-NEXT:    lui $1, 1
+; O32-NEXT:    addu $1, $sp, $1
+; O32-NEXT:    lw $7, 4($1)
+; O32-NEXT:    lui $1, 1
+; O32-NEXT:    addu $1, $sp, $1
+; O32-NEXT:    lw $6, 0($1)
+; O32-NEXT:    lui $1, 1
+; O32-NEXT:    addu $1, $sp, $1
+; O32-NEXT:    lw $5, -4($1)
+; O32-NEXT:    lui $1, 1
+; O32-NEXT:    addu $1, $sp, $1
 ; O32-NEXT:    jal f2
-; O32-NEXT:    lw $4, 8($sp)
+; O32-NEXT:    lw $4, -8($1)
 ; O32-NEXT:    ori $1, $zero, 65520
 ; O32-NEXT:    addu $sp, $sp, $1
 ; O32-NEXT:    lui $1, 1
@@ -268,15 +320,31 @@ define dso_local void @g2(ptr %a) {
 ; N32-NEXT:    sll $4, $sp, 0
 ; N32-NEXT:    jal memcpy
 ; N32-NEXT:    ori $6, $zero, 65456
-; N32-NEXT:    ld $11, 64($sp)
-; N32-NEXT:    ld $10, 56($sp)
-; N32-NEXT:    ld $9, 48($sp)
-; N32-NEXT:    ld $8, 40($sp)
-; N32-NEXT:    ld $7, 32($sp)
-; N32-NEXT:    ld $6, 24($sp)
-; N32-NEXT:    ld $5, 16($sp)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $11, -16($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $10, -24($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $9, -32($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $8, -40($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $7, -48($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $6, -56($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
+; N32-NEXT:    ld $5, -64($1)
+; N32-NEXT:    lui $1, 1
+; N32-NEXT:    addu $1, $sp, $1
 ; N32-NEXT:    jal f2
-; N32-NEXT:    ld $4, 8($sp)
+; N32-NEXT:    ld $4, -72($1)
 ; N32-NEXT:    ori $1, $zero, 65456
 ; N32-NEXT:    addu $sp, $sp, $1
 ; N32-NEXT:    lui $1, 1
@@ -318,15 +386,31 @@ define dso_local void @g2(ptr %a) {
 ; N64-NEXT:    ori $6, $zero, 65456
 ; N64-NEXT:    jal memcpy
 ; N64-NEXT:    move $4, $sp
-; N64-NEXT:    ld $11, 64($sp)
-; N64-NEXT:    ld $10, 56($sp)
-; N64-NEXT:    ld $9, 48($sp)
-; N64-NEXT:    ld $8, 40($sp)
-; N64-NEXT:    ld $7, 32($sp)
-; N64-NEXT:    ld $6, 24($sp)
-; N64-NEXT:    ld $5, 16($sp)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $11, -16($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $10, -24($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $9, -32($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $8, -40($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $7, -48($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $6, -56($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
+; N64-NEXT:    ld $5, -64($1)
+; N64-NEXT:    lui $1, 1
+; N64-NEXT:    daddu $1, $sp, $1
 ; N64-NEXT:    jal f2
-; N64-NEXT:    ld $4, 8($sp)
+; N64-NEXT:    ld $4, -72($1)
 ; N64-NEXT:    ori $1, $zero, 65456
 ; N64-NEXT:    daddu $sp, $sp, $1
 ; N64-NEXT:    lui $1, 1

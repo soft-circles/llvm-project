@@ -31,7 +31,7 @@ public:
 private:
   void eliminateFI(MachineBasicBlock::iterator II, unsigned OpNo,
                    int FrameIndex, uint64_t StackSize,
-                   int64_t SPOffset) const override;
+                   int64_t SPOffset, int SPAdj) const override;
 };
 
 } // end namespace llvm
