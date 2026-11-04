@@ -660,6 +660,13 @@ def UImm32CoercedAsmOperandClass : UImmAnyAsmOperandClass<33, []> {
   let Name = "UImm32_Coerced";
   let DiagnosticType = "UImm32_Coerced";
 }
+// Like UImm32CoercedAsmOperandClass but keeps an expression that isn't constant
+// at parse time, so li can relocate or fold it after layout.
+def UImm32CoercedExprAsmOperandClass : UImmAnyAsmOperandClass<33, []> {
+  let Name = "UImm32_CoercedExpr";
+  let RenderMethod = "addUImmOperands<32>";
+  let DiagnosticType = "UImm32_Coerced";
+}
 def SImm32RelaxedAsmOperandClass
     : SImmAsmOperandClass<32, [UImm32CoercedAsmOperandClass]> {
   let Name = "SImm32_Relaxed";
@@ -1073,6 +1080,11 @@ def simm16_64 : Operand<i64> {
 // like simm32 but coerces simm32 to uimm32.
 def uimm32_coerced : Operand<i32> {
   let ParserMatchClass = UImm32CoercedAsmOperandClass;
+}
+// Like uimm32_coerced but also accepts an expression that isn't constant at
+// parse time.
+def uimm32_coerced_expr : Operand<i32> {
+  let ParserMatchClass = UImm32CoercedExprAsmOperandClass;
 }
 // Like simm32 but coerces uimm32 to simm32.
 def simm32_relaxed : Operand<i32> {
@@ -2918,12 +2930,12 @@ let AdditionalPredicates = [NotInMicroMips] in
 // Assembler Pseudo Instructions
 //===----------------------------------------------------------------------===//
 
-// We use uimm32_coerced to accept a 33 bit signed number that is rendered into
-// a 32 bit number.
+// We use uimm32_coerced_expr to accept a 33 bit signed number that is rendered
+// into a 32 bit number, or an expression that isn't constant at parse time.
 class LoadImmediate32<string instr_asm, Operand Od, RegisterOperand RO> :
   MipsAsmPseudoInst<(outs RO:$rt), (ins Od:$imm32),
                      !strconcat(instr_asm, "\t$rt, $imm32")> ;
-def LoadImm32 : LoadImmediate32<"li", uimm32_coerced, GPR32Opnd>;
+def LoadImm32 : LoadImmediate32<"li", uimm32_coerced_expr, GPR32Opnd>;
 
 class LoadAddressFromReg32<string instr_asm, Operand MemOpnd,
                            RegisterOperand RO> :

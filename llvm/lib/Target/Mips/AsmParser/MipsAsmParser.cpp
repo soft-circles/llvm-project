@@ -2883,10 +2883,33 @@ bool MipsAsmParser::loadImmediate(int64_t ImmValue, MCRegister DstReg,
 bool MipsAsmParser::expandLoadImm(MCInst &Inst, bool Is32BitImm, SMLoc IDLoc,
                                   MCStreamer &Out, const MCSubtargetInfo *STI) {
   const MCOperand &ImmOp = Inst.getOperand(1);
-  assert(ImmOp.isImm() && "expected immediate operand kind");
   const MCOperand &DstRegOp = Inst.getOperand(0);
   assert(DstRegOp.isReg() && "expected register operand kind");
 
+  if (ImmOp.isExpr()) {
+    if (!Is32BitImm && !isGP64bit()) {
+      Error(IDLoc, "instruction requires a 64-bit architecture");
+      return true;
+    }
+
+    // A difference of labels that are already laid out has its full value.
+    const MCExpr *Expr = ImmOp.getExpr();
+    int64_t ImmValue;
+    if (Expr->evaluateAsAbsolute(ImmValue, getStreamer().getAssemblerPtr()))
+      return loadImmediate(ImmValue, DstRegOp.getReg(), MCRegister(),
+                           Is32BitImm, false, IDLoc, Out, STI);
+
+    // Like GNU as, load the low 16 bits of any other expression. The fixup
+    // folds it after layout or becomes a relocation.
+    MipsTargetStreamer &TOut = getTargetStreamer();
+    if (!isa<MCSpecifierExpr>(Expr))
+      Expr = MCSpecifierExpr::create(Expr, Mips::S_LO, getContext(), IDLoc);
+    TOut.emitRRX(Mips::ADDiu, DstRegOp.getReg(), ABI.GetZeroReg(),
+                 MCOperand::createExpr(Expr), IDLoc, STI);
+    return false;
+  }
+
+  assert(ImmOp.isImm() && "expected immediate operand kind");
   if (loadImmediate(ImmOp.getImm(), DstRegOp.getReg(), MCRegister(), Is32BitImm,
                     false, IDLoc, Out, STI))
     return true;
