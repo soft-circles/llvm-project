@@ -971,13 +971,16 @@ let AdditionalPredicates = [NotInMicroMips] in {
                       (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
                       0>, ISA_MIPS3;
 
-  defm : OneOrTwoOperandMacroImmediateAlias<"and", ANDi64, GPR64Opnd, imm64_const>,
+  defm : OneOrTwoOperandMacroImmediateAlias<"and", ANDi64, GPR64Opnd,
+                                            imm64_const>,
          ISA_MIPS3, GPR_64;
 
-  defm : OneOrTwoOperandMacroImmediateAlias<"or", ORi64, GPR64Opnd, imm64_const>,
+  defm : OneOrTwoOperandMacroImmediateAlias<"or", ORi64, GPR64Opnd,
+                                            imm64_const>,
          ISA_MIPS3, GPR_64;
 
-  defm : OneOrTwoOperandMacroImmediateAlias<"xor", XORi64, GPR64Opnd, imm64_const>,
+  defm : OneOrTwoOperandMacroImmediateAlias<"xor", XORi64, GPR64Opnd,
+                                            imm64_const>,
          ISA_MIPS3, GPR_64;
 }
 let AdditionalPredicates = [NotInMicroMips] in {

@@ -4940,9 +4940,9 @@ bool AsmParser::parseDirectiveDS(StringRef IDVal, unsigned Size) {
   if (!NumValuesExpr->evaluateAsAbsolute(NumValues,
                                          getStreamer().getAssemblerPtr())) {
     getStreamer().emitFill(
-        *MCBinaryExpr::createMul(
-            NumValuesExpr, MCConstantExpr::create(Size, getContext()),
-            getContext()),
+        *MCBinaryExpr::createMul(NumValuesExpr,
+                                 MCConstantExpr::create(Size, getContext()),
+                                 getContext()),
         0, NumValuesLoc);
     return false;
   }

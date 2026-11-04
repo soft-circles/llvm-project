@@ -934,7 +934,8 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
 }
 
 bool MipsTargetELFStreamer::isAtCurrentPos(const MCSymbol &Symbol) {
-  auto *DF = dyn_cast_or_null<MCDataFragment>(getStreamer().getCurrentFragment());
+  auto *DF =
+      dyn_cast_or_null<MCDataFragment>(getStreamer().getCurrentFragment());
   return DF && Symbol.getFragment() == DF &&
          Symbol.getOffset() == DF->getContents().size();
 }
