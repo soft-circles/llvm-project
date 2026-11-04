@@ -288,9 +288,23 @@ void MipsAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
                                 bool IsResolved) {
   if (shouldForceRelocation(Fixup))
     IsResolved = false;
-  maybeAddReloc(F, Fixup, Target, Value, IsResolved);
   MCFixupKind Kind = Fixup.getKind();
   MCContext &Ctx = getContext();
+  bool IsAnyImm16Reloc = Kind == Mips::fixup_Mips_AnyImm16 && !IsResolved;
+  if (IsAnyImm16Reloc) {
+    // GAS relocates a symbol in an I-type immediate with R_MIPS_LO16. A
+    // microMIPS instruction would need R_MICROMIPS_LO16, which the fixup can't
+    // select.
+    auto *EF = dyn_cast<MCEncodedFragment>(&F);
+    if (EF && EF->getSubtargetInfo()->hasFeature(Mips::FeatureMicroMips)) {
+      Ctx.reportError(Fixup.getLoc(), "unsupported relocation type");
+      return;
+    }
+  }
+  maybeAddReloc(F, Fixup, Target, Value, IsResolved);
+  // A REL addend keeps only the low 16 bits, as with %lo.
+  if (IsAnyImm16Reloc)
+    Value &= 0xffff;
   Value = adjustFixupValue(Fixup, Value, Ctx);
 
   if (!Value)

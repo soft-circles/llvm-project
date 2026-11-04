@@ -656,8 +656,11 @@ class UImmAnyAsmOperandClass<int Bits, list<AsmOperandClass> Supers = []>
 //   This is entirely arbitrary. We need an ordering and what we pick is
 //   unimportant since only one is possible for a given mnemonic.
 
+// The macros that take the 32-bit classes below expand a constant, so like GAS
+// they reject a symbol or an expression that isn't constant at parse time.
 def UImm32CoercedAsmOperandClass : UImmAnyAsmOperandClass<33, []> {
   let Name = "UImm32_Coerced";
+  let PredicateMethod = "isConstantSImm<33>";
   let DiagnosticType = "UImm32_Coerced";
 }
 // Like UImm32CoercedAsmOperandClass but keeps an expression that isn't constant
@@ -670,11 +673,13 @@ def UImm32CoercedExprAsmOperandClass : UImmAnyAsmOperandClass<33, []> {
 def SImm32RelaxedAsmOperandClass
     : SImmAsmOperandClass<32, [UImm32CoercedAsmOperandClass]> {
   let Name = "SImm32_Relaxed";
-  let PredicateMethod = "isAnyImm<33>";
+  let PredicateMethod = "isConstantAnyImm<33>";
   let DiagnosticType = "SImm32_Relaxed";
 }
 def SImm32AsmOperandClass
-    : SImmAsmOperandClass<32, [SImm32RelaxedAsmOperandClass]>;
+    : SImmAsmOperandClass<32, [SImm32RelaxedAsmOperandClass]> {
+  let PredicateMethod = "isConstantSImm<32>";
+}
 def ConstantUImm26AsmOperandClass
     : ConstantUImmAsmOperandClass<26, [SImm32AsmOperandClass]>;
 def ConstantUImm25AsmOperandClass
@@ -866,6 +871,17 @@ def calltarget  : Operand<iPTR> {
 }
 
 def imm64: Operand<i64>;
+
+// Like imm64 but only a constant at parse time, for the macros that expand one.
+def ConstantImm64AsmOperandClass : AsmOperandClass {
+  let Name = "ConstantImm64";
+  let RenderMethod = "addImmOperands";
+  let PredicateMethod = "isConstantImm";
+  let SuperClasses = [ImmAsmOperand];
+}
+def imm64_const : Operand<i64> {
+  let ParserMatchClass = ConstantImm64AsmOperandClass;
+}
 
 def simm19_lsl2 : Operand<i32> {
   let EncoderMethod = "getSimm19Lsl2Encoding";

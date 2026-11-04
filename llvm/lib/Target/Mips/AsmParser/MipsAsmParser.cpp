@@ -166,6 +166,11 @@ class MipsAsmParser : public MCTargetAsmParser {
   // Map of register aliases created via the .set directive.
   StringMap<RegisterSetAlias> RegisterSets;
 
+  /// The section in which ".align 0" turned off the automatic alignment of
+  /// .half, .word and .dword data, or null if it is on. As in GAS, it turns
+  /// back on at the next section change or nonzero .align.
+  const MCSection *AutoAlignOffIn = nullptr;
+
   // Print a warning along with its fix-it message at the given range.
   void printWarningWithFixIt(const Twine &Msg, const Twine &FixMsg,
                              SMRange Range, bool ShowColors = true);
@@ -538,6 +543,7 @@ public:
     MCAsmParserExtension::Initialize(parser);
 
     parser.addAliasForDirective(".asciiz", ".asciz");
+    parser.addAliasForDirective(".half", ".2byte");
     parser.addAliasForDirective(".hword", ".2byte");
     parser.addAliasForDirective(".word", ".4byte");
     parser.addAliasForDirective(".dword", ".8byte");
@@ -1285,6 +1291,10 @@ public:
     return isConstantImm() ? (isInt<Bits>(getConstantImm()) ||
                               isUInt<Bits>(getConstantImm()))
                            : isImm();
+  }
+
+  template <unsigned Bits> bool isConstantAnyImm() const {
+    return isConstantImm() && isAnyImm<Bits>();
   }
 
   template <unsigned Bits, int Offset = 0> bool isConstantSImm() const {
@@ -6383,7 +6393,7 @@ MCRegister MipsAsmParser::getReg(int RC, int RegNo) {
 
 // Parse an expression with optional relocation operator prefixes (e.g. %lo).
 // Some weird expressions allowed by gas are not supported for simplicity,
-// e.g. "%lo foo", "(%lo(foo))", "%lo(foo)+1".
+// e.g. "%lo foo", "(%lo(foo))", "1+%lo(foo)".
 const MCExpr *MipsAsmParser::parseRelocExpr() {
   auto getOp = [](StringRef Op) {
     return StringSwitch<Mips::Specifier>(Op)
@@ -6431,10 +6441,25 @@ const MCExpr *MipsAsmParser::parseRelocExpr() {
   }
   if (Parser.parseExpression(Res))
     return nullptr;
+  bool IsPlainLo = Ops.size() == 1 && Ops.front() == Mips::S_LO;
   while (Ops.size()) {
     if (Parser.parseToken(AsmToken::RParen, "expected ')'"))
       return nullptr;
     Res = MCSpecifierExpr::create(Res, Ops.pop_back_val(), getContext());
+  }
+  // GAS accepts "%lo(X) + E" and "%lo(X) - E", which are "%lo(X + E)" and
+  // "%lo(X - E)" in a 16-bit field. A '-' stays a unary operator on the first
+  // term, so "%lo(X) - 4 + 2" is "%lo(X + (-4 + 2))".
+  if (IsPlainLo &&
+      (getLexer().is(AsmToken::Plus) || getLexer().is(AsmToken::Minus))) {
+    parseOptionalToken(AsmToken::Plus);
+    const MCExpr *Addend;
+    if (Parser.parseExpression(Addend))
+      return nullptr;
+    Res = MCSpecifierExpr::create(
+        MCBinaryExpr::createAdd(cast<MCSpecifierExpr>(Res)->getSubExpr(),
+                                Addend, getContext()),
+        Mips::S_LO, getContext());
   }
   return Res;
 }
@@ -6562,18 +6587,19 @@ ParseStatus MipsAsmParser::parseMemOperand(OperandVector &Operands) {
         Operands.push_back(MipsOperand::CreateImm(IdVal, S, E, *this));
         return ParseStatus::Success;
       }
-      if (Tok.is(AsmToken::EndOfStatement)) {
+      // Zero register assumed, add a memory operand with ZERO as its base.
+      // "Base" will be managed by k_Memory.
+      auto AddZeroBaseMem = [&]() {
         SMLoc E =
             SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
-
-        // Zero register assumed, add a memory operand with ZERO as its base.
-        // "Base" will be managed by k_Memory.
         auto Base = MipsOperand::createGPRReg(
             0, "0", getContext().getRegisterInfo(), S, E, *this);
         Operands.push_back(
             MipsOperand::CreateMem(std::move(Base), IdVal, S, E, *this));
         return ParseStatus::Success;
-      }
+      };
+      if (Tok.is(AsmToken::EndOfStatement))
+        return AddZeroBaseMem();
       MCBinaryExpr::Opcode Opcode;
       // GAS and LLVM treat comparison operators different. GAS will generate -1
       // or 0, while LLVM will generate 0 or 1. Since a comparsion operator is
@@ -6627,6 +6653,9 @@ ParseStatus MipsAsmParser::parseMemOperand(OperandVector &Operands) {
       if (getParser().parseExpression(NextExpr))
         return ParseStatus::Failure;
       IdVal = MCBinaryExpr::create(Opcode, IdVal, NextExpr, getContext());
+      // GAS also takes "(sym) + 4" with no base register.
+      if (Parser.getTok().is(AsmToken::EndOfStatement))
+        return AddZeroBaseMem();
     }
 
     Parser.Lex(); // Eat the '(' token.
@@ -8638,6 +8667,29 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
 
   MCAsmParser &Parser = getParser();
   StringRef IDVal = DirectiveID.getString();
+
+  const MCSection *CurSection = getStreamer().getCurrentSectionOnly();
+  if (AutoAlignOffIn != CurSection)
+    AutoAlignOffIn = nullptr;
+  if (IDVal == ".align") {
+    // Let the generic parser handle the directive itself.
+    const AsmToken &Tok = Parser.getTok();
+    bool IsZero = Tok.is(AsmToken::Integer) && Tok.getIntVal() == 0;
+    AutoAlignOffIn = IsZero ? CurSection : nullptr;
+    return true;
+  }
+  // GAS aligns these to their size, unlike .2byte, .4byte and .8byte. Align
+  // here and let the generic parser emit the data.
+  unsigned AutoAlignSize = StringSwitch<unsigned>(IDVal)
+                               .Cases(".half", ".hword", ".short", 2)
+                               .Cases(".word", ".int", ".long", 4)
+                               .Case(".dword", 8)
+                               .Default(0);
+  if (AutoAlignSize) {
+    if (!AutoAlignOffIn && CurSection)
+      getTargetStreamer().emitAutoAlignment(Align(AutoAlignSize));
+    return true;
+  }
 
   if (IDVal == ".cpadd") {
     parseDirectiveCpAdd(DirectiveID.getLoc());

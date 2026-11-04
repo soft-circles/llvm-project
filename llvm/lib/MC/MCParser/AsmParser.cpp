@@ -179,6 +179,9 @@ private:
   // Is alt macro mode enabled.
   bool AltMacroMode = false;
 
+  /// Are we between .func and .endfunc?
+  bool InsideFunc = false;
+
 protected:
   virtual bool parseStatement(ParseStatementInfo &Info,
                               MCAsmParserSemaCallback *SI);
@@ -524,6 +527,8 @@ private:
     DK_ULEB128,
     DK_ERR,
     DK_ERROR,
+    DK_FUNC,
+    DK_ENDFUNC,
     DK_WARNING,
     DK_PRINT,
     DK_ADDRSIG,
@@ -687,6 +692,10 @@ private:
 
   // "end"
   bool parseDirectiveEnd(SMLoc DirectiveLoc);
+
+  // ".func" or ".endfunc"
+  bool parseDirectiveFunc(SMLoc DirectiveLoc);
+  bool parseDirectiveEndFunc(SMLoc DirectiveLoc);
 
   // ".err" or ".error"
   bool parseDirectiveError(SMLoc DirectiveLoc, bool WithMessage);
@@ -2174,6 +2183,10 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
       return parseDirectivePurgeMacro(IDLoc);
     case DK_END:
       return parseDirectiveEnd(IDLoc);
+    case DK_FUNC:
+      return parseDirectiveFunc(IDLoc);
+    case DK_ENDFUNC:
+      return parseDirectiveEndFunc(IDLoc);
     case DK_ERR:
       return parseDirectiveError(IDLoc, false);
     case DK_ERROR:
@@ -4918,10 +4931,21 @@ bool AsmParser::parseDirectiveRealDCB(StringRef IDVal, const fltSemantics &Seman
 /// ::= .ds.{b, d, l, p, s, w, x} expression
 bool AsmParser::parseDirectiveDS(StringRef IDVal, unsigned Size) {
   SMLoc NumValuesLoc = Lexer.getLoc();
-  int64_t NumValues;
-  if (checkForValidSection() || parseAbsoluteExpression(NumValues) ||
-      parseEOL())
+  const MCExpr *NumValuesExpr;
+  if (checkForValidSection() || parseExpression(NumValuesExpr) || parseEOL())
     return true;
+
+  // As with .space, a count that isn't known yet is resolved after layout.
+  int64_t NumValues;
+  if (!NumValuesExpr->evaluateAsAbsolute(NumValues,
+                                         getStreamer().getAssemblerPtr())) {
+    getStreamer().emitFill(
+        *MCBinaryExpr::createMul(
+            NumValuesExpr, MCConstantExpr::create(Size, getContext()),
+            getContext()),
+        0, NumValuesLoc);
+    return false;
+  }
 
   if (NumValues < 0) {
     Warning(NumValuesLoc, "'" + Twine(IDVal) + "' directive with negative repeat count has no effect");
@@ -5347,6 +5371,38 @@ bool AsmParser::parseDirectiveEnd(SMLoc DirectiveLoc) {
   return false;
 }
 
+/// parseDirectiveFunc
+/// ::= .func [name [, label]]
+/// GAS emits debug information for these only with --gstabs, so they are
+/// otherwise accepted and ignored.
+bool AsmParser::parseDirectiveFunc(SMLoc DirectiveLoc) {
+  StringRef Name;
+  if (Lexer.isNot(AsmToken::EndOfStatement)) {
+    if (check(parseIdentifier(Name), "expected identifier"))
+      return true;
+    if (parseOptionalToken(AsmToken::Comma) &&
+        check(parseIdentifier(Name), "expected identifier"))
+      return true;
+  }
+  if (parseEOL())
+    return true;
+  if (InsideFunc)
+    return Error(DirectiveLoc, ".endfunc missing for previous .func");
+  InsideFunc = true;
+  return false;
+}
+
+/// parseDirectiveEndFunc
+/// ::= .endfunc
+bool AsmParser::parseDirectiveEndFunc(SMLoc DirectiveLoc) {
+  if (parseEOL())
+    return true;
+  if (!InsideFunc)
+    return Error(DirectiveLoc, "missing .func");
+  InsideFunc = false;
+  return false;
+}
+
 /// parseDirectiveError
 ///   ::= .err
 ///   ::= .error [string]
@@ -5499,6 +5555,8 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".elseif"] = DK_ELSEIF;
   DirectiveKindMap[".else"] = DK_ELSE;
   DirectiveKindMap[".end"] = DK_END;
+  DirectiveKindMap[".func"] = DK_FUNC;
+  DirectiveKindMap[".endfunc"] = DK_ENDFUNC;
   DirectiveKindMap[".endif"] = DK_ENDIF;
   DirectiveKindMap[".skip"] = DK_SKIP;
   DirectiveKindMap[".space"] = DK_SPACE;
