@@ -874,7 +874,8 @@ def calltarget  : Operand<iPTR> {
 
 def imm64: Operand<i64>;
 
-// Like imm64 but only a constant at parse time, for the macros that expand one.
+// Like imm64 but only an expression that folds to a constant at parse time, for
+// the macros that expand one.
 def ConstantImm64AsmOperandClass : AsmOperandClass {
   let Name = "ConstantImm64";
   let RenderMethod = "addFoldedImmOperands";

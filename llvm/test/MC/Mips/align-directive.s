@@ -18,15 +18,16 @@
 # CHECK-NEXT: 0000001c l .data 00000000 f
 # CHECK-NEXT: 0000001e l .data 00000000 u
 # CHECK-NEXT: 00000000 l *ABS* 00000000 Z
-# CHECK-NEXT: 00000020 l .data 00000000 z
-# CHECK-NEXT: 00000022 l .data 00000000 m
+# CHECK-NEXT: 00000021 l .data 00000000 z
+# CHECK-NEXT: 00000023 l .data 00000000 m
 # CHECK-NEXT: 00000008 l .text 00000000 t
 # CHECK:      Contents of section .text:
-# CHECK-NEXT:  0000 00000000 01000000 00000000
+# CHECK-NEXT:  0000 00000000 01000000 00000000 01555555
+# CHECK-NEXT:  0010 00000000
 # CHECK:      Contents of section .data:
 # CHECK-NEXT:  0000 01000000 00000000 01000000 00000000
 # CHECK-NEXT:  0010 01000000 00000000 01555555 01000101
-# CHECK-NEXT:  0020 000102
+# CHECK-NEXT:  0020 01000102
 
 # ASM:      a:
 # ASM-NEXT:   .align 3
@@ -50,20 +51,30 @@ u:	.ALIGN 1
 	.byte 1
 Z = 0
 	.align Z
-	.byte 1
+	.byte 1, 1
 z:	.half 1
-## Seven bytes of padding are more than the maximum of 4, so there are none.
+## Six bytes of padding are more than the maximum of 4, so there are none.
 m:	.align 3,,4
 	.byte 2
 
-## In code the padding is nops.
+## In code the padding is nops, which are zeros for MIPS, unless a fill is
+## given.
 	.text
 	nop
 	.byte 1
 t:	.align 3
 	nop
+	.byte 1
+	.align 3, 0x55
+	nop
 
 .ifdef ERR
+# ERR: :[[#@LINE+1]]:12: warning: maximum bytes expression exceeds alignment and has no effect
+	.align 2,,8
+	.bss
+# ERR: :[[#@LINE+1]]:12: warning: ignoring non-zero fill value in SHT_NOBITS section '.bss'
+	.align 2, 1
+	.data
 # ERR: :[[#@LINE+1]]:9: error: invalid alignment value
 	.align 32
 # ERR: :[[#@LINE+1]]:9: error: invalid alignment value

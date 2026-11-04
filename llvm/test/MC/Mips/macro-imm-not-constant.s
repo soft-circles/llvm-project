@@ -34,6 +34,12 @@ e:
 # FOLD-NEXT: ddiv $zero, $3, $1
 # FOLD-NEXT: mflo $3
 	ddiv $3, e - s
+# FOLD-NEXT: addiu $1, $zero, 0x8
+# FOLD-NEXT: nor $3, $3, $1
+	nor $3, $3, e - s
+# FOLD-NEXT: xori $3, $3, 0x8
+# FOLD-NEXT: sltiu $3, $3, 0x1
+	seq $3, $3, e - s
 .else
 .ifdef OK
 ## A symbol with a constant value is still a constant.
