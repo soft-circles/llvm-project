@@ -212,6 +212,7 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool ParseDirective(AsmToken DirectiveID) override;
   void onLabelParsed(MCSymbol *Symbol) override;
   void autoAlignData(StringRef IDVal);
+  bool parseDirectiveAlign();
 
   ParseStatus parseMemOperand(OperandVector &Operands);
   ParseStatus matchAnyRegisterNameWithoutDollar(OperandVector &Operands,
@@ -1200,6 +1201,11 @@ public:
     addConstantSImmOperands<Bits, 0, 0>(Inst, N);
   }
 
+  void addFoldedImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    Inst.addOperand(MCOperand::createImm(getConstantImm()));
+  }
+
   template <unsigned Bits>
   void addUImmOperands(MCInst &Inst, unsigned N) const {
     if (isImm() && !isConstantImm()) {
@@ -1300,8 +1306,22 @@ public:
                            : isImm();
   }
 
-  template <unsigned Bits> bool isConstantAnyImm() const {
-    return isConstantImm() && isAnyImm<Bits>();
+  // Like isConstantImm, but a difference of labels that layout already fixes
+  // folds too, as GAS folds the operands of the macros that expand a constant.
+  bool isFoldedImm() const {
+    int64_t Res;
+    return isImm() &&
+           getImm()->evaluateAsAbsolute(
+               Res, AsmParser.getParser().getStreamer().getAssemblerPtr());
+  }
+
+  template <unsigned Bits> bool isFoldedSImm() const {
+    return isFoldedImm() && isInt<Bits>(getConstantImm());
+  }
+
+  template <unsigned Bits> bool isFoldedAnyImm() const {
+    return isFoldedImm() &&
+           (isInt<Bits>(getConstantImm()) || isUInt<Bits>(getConstantImm()));
   }
 
   template <unsigned Bits, int Offset = 0> bool isConstantSImm() const {
@@ -1456,7 +1476,8 @@ public:
   int64_t getConstantImm() const {
     const MCExpr *Val = getImm();
     int64_t Value = 0;
-    (void)Val->evaluateAsAbsolute(Value);
+    (void)Val->evaluateAsAbsolute(
+        Value, AsmParser.getParser().getStreamer().getAssemblerPtr());
     return Value;
   }
 
@@ -8696,11 +8717,6 @@ void MipsAsmParser::autoAlignData(StringRef IDVal) {
     AutoAlignLabels.clear();
     return;
   }
-  if (Name == ".align") {
-    const AsmToken &Tok = getParser().getTok();
-    AutoAlignOff = Tok.is(AsmToken::Integer) && Tok.getIntVal() == 0;
-    return;
-  }
   unsigned Size = StringSwitch<unsigned>(Name)
                       .Cases(".half", ".hword", ".short", 2)
                       .Cases(".word", ".int", ".long", 4)
@@ -8709,8 +8725,67 @@ void MipsAsmParser::autoAlignData(StringRef IDVal) {
                       .Default(0);
   if (!Size || AutoAlignOff || !getStreamer().getCurrentSectionOnly())
     return;
-  getTargetStreamer().emitAutoAlignment(Align(Size), AutoAlignLabels);
+  getTargetStreamer().emitDirectiveAlign(Align(Size), std::nullopt, 0,
+                                         AutoAlignLabels, getSTI());
   AutoAlignLabels.clear();
+}
+
+/// parseDirectiveAlign
+///  ::= .align log2 [, [fill] [, max]]
+/// As the generic directive, but as in GAS it also moves the labels at the
+/// current position past the padding, and ".align 0" turns the automatic
+/// alignment of data off until a nonzero .align or a section directive.
+bool MipsAsmParser::parseDirectiveAlign() {
+  MCAsmParser &Parser = getParser();
+  SMLoc AlignmentLoc = getLexer().getLoc();
+  int64_t Log2Align;
+  std::optional<int64_t> Fill;
+  int64_t MaxBytes = 0;
+  SMLoc FillLoc, MaxBytesLoc;
+  if (Parser.checkForValidSection() ||
+      Parser.parseAbsoluteExpression(Log2Align))
+    return true;
+  if (parseOptionalToken(AsmToken::Comma)) {
+    // The fill can be left out before a maximum, as in ".align 3,,4".
+    if (getLexer().isNot(AsmToken::Comma)) {
+      FillLoc = getLexer().getLoc();
+      if (Parser.parseAbsoluteExpression(Fill.emplace()))
+        return true;
+    }
+    if (parseOptionalToken(AsmToken::Comma)) {
+      MaxBytesLoc = getLexer().getLoc();
+      if (Parser.parseAbsoluteExpression(MaxBytes))
+        return true;
+    }
+  }
+  if (Parser.parseEOL())
+    return true;
+
+  if (Log2Align < 0 || Log2Align >= 32)
+    return Error(AlignmentLoc, "invalid alignment value");
+  Align Alignment(uint64_t(1) << Log2Align);
+  if (MaxBytesLoc.isValid() && MaxBytes < 1) {
+    Error(MaxBytesLoc, "alignment directive can never be satisfied in this "
+                       "many bytes, ignoring maximum bytes expression");
+    MaxBytes = 0;
+  } else if (MaxBytesLoc.isValid() && uint64_t(MaxBytes) >= Alignment.value()) {
+    Warning(MaxBytesLoc, "maximum bytes expression exceeds alignment and has "
+                         "no effect");
+    MaxBytes = 0;
+  }
+  const MCSection *Section = getStreamer().getCurrentSectionOnly();
+  if (Fill && *Fill != 0 && Section->isVirtualSection()) {
+    Warning(FillLoc, "ignoring non-zero fill value in " +
+                         Section->getVirtualSectionKind() + " section '" +
+                         Section->getName() + "'");
+    Fill = 0;
+  }
+
+  AutoAlignOff = Log2Align == 0;
+  getTargetStreamer().emitDirectiveAlign(Alignment, Fill, MaxBytes,
+                                         AutoAlignLabels, getSTI());
+  AutoAlignLabels.clear();
+  return false;
 }
 
 bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
@@ -8723,6 +8798,10 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getString();
 
   autoAlignData(IDVal);
+  if (IDVal.equals_insensitive(".align")) {
+    parseDirectiveAlign();
+    return false;
+  }
 
   if (IDVal == ".cpadd") {
     parseDirectiveCpAdd(DirectiveID.getLoc());

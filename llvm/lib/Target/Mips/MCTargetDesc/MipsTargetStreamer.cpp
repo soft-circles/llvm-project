@@ -52,9 +52,16 @@ MipsTargetStreamer::MipsTargetStreamer(MCStreamer &S)
   GPRInfoSet = FPRInfoSet = FrameInfoSet = false;
 }
 
-void MipsTargetStreamer::emitAutoAlignment(Align Alignment,
-                                           ArrayRef<MCSymbol *> Labels) {
-  Streamer.emitValueToAlignment(Alignment);
+void MipsTargetStreamer::emitDirectiveAlign(Align Alignment,
+                                            std::optional<int64_t> Fill,
+                                            unsigned MaxBytes,
+                                            ArrayRef<MCSymbol *> Labels,
+                                            const MCSubtargetInfo &STI) {
+  const MCSection *Section = Streamer.getCurrentSectionOnly();
+  if (!Fill && Section->useCodeAlign())
+    Streamer.emitCodeAlignment(Alignment, &STI, MaxBytes);
+  else
+    Streamer.emitValueToAlignment(Alignment, Fill.value_or(0), 1, MaxBytes);
 }
 
 void MipsTargetStreamer::emitGPRel32Value(const MCExpr *) {}
@@ -439,6 +446,23 @@ void MipsTargetAsmStreamer::emitGPRel64Value(const MCExpr *Value) {
   auto *MAI = getStreamer().getContext().getAsmInfo();
   OS << "\t.gpdword\t";
   MAI->printExpr(OS, *Value);
+  OS << '\n';
+}
+
+void MipsTargetAsmStreamer::emitDirectiveAlign(Align Alignment,
+                                               std::optional<int64_t> Fill,
+                                               unsigned MaxBytes,
+                                               ArrayRef<MCSymbol *> Labels,
+                                               const MCSubtargetInfo &STI) {
+  // Unlike .p2align, .align moves the labels in front of it, so reassembling
+  // this places them as the object form does.
+  OS << "\t.align\t" << Log2(Alignment);
+  if (Fill || MaxBytes)
+    OS << ", ";
+  if (Fill)
+    OS << *Fill;
+  if (MaxBytes)
+    OS << ", " << MaxBytes;
   OS << '\n';
 }
 
@@ -942,13 +966,16 @@ bool MipsTargetELFStreamer::isAtCurrentPos(const MCSymbol &Symbol) {
          Symbol.getOffset() == DF->getContents().size();
 }
 
-void MipsTargetELFStreamer::emitAutoAlignment(Align Alignment,
-                                              ArrayRef<MCSymbol *> Labels) {
+void MipsTargetELFStreamer::emitDirectiveAlign(Align Alignment,
+                                               std::optional<int64_t> Fill,
+                                               unsigned MaxBytes,
+                                               ArrayRef<MCSymbol *> Labels,
+                                               const MCSubtargetInfo &STI) {
   SmallVector<MCSymbol *, 4> ToMove;
   copy_if(Labels, std::back_inserter(ToMove),
           [&](MCSymbol *L) { return isAtCurrentPos(*L); });
-  getStreamer().emitValueToAlignment(Alignment, /*Fill=*/0, /*FillLen=*/1,
-                                     /*MaxBytesToEmit=*/0);
+  MipsTargetStreamer::emitDirectiveAlign(Alignment, Fill, MaxBytes, Labels,
+                                         STI);
   MCDataFragment *DF = getStreamer().getOrCreateDataFragment();
   for (MCSymbol *L : ToMove) {
     L->setFragment(DF);

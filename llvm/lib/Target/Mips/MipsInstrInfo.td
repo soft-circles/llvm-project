@@ -657,10 +657,10 @@ class UImmAnyAsmOperandClass<int Bits, list<AsmOperandClass> Supers = []>
 //   unimportant since only one is possible for a given mnemonic.
 
 // The macros that take the 32-bit classes below expand a constant, so like GAS
-// they reject a symbol or an expression that isn't constant at parse time.
+// they reject a symbol or an expression that doesn't fold to one at parse time.
 def UImm32CoercedAsmOperandClass : UImmAnyAsmOperandClass<33, []> {
   let Name = "UImm32_Coerced";
-  let PredicateMethod = "isConstantSImm<33>";
+  let PredicateMethod = "isFoldedSImm<33>";
   let DiagnosticType = "UImm32_Coerced";
 }
 // Like UImm32CoercedAsmOperandClass but keeps an expression that isn't constant
@@ -673,12 +673,14 @@ def UImm32CoercedExprAsmOperandClass : UImmAnyAsmOperandClass<33, []> {
 def SImm32RelaxedAsmOperandClass
     : SImmAsmOperandClass<32, [UImm32CoercedAsmOperandClass]> {
   let Name = "SImm32_Relaxed";
-  let PredicateMethod = "isConstantAnyImm<33>";
+  let RenderMethod = "addConstantSImmOperands<32>";
+  let PredicateMethod = "isFoldedAnyImm<33>";
   let DiagnosticType = "SImm32_Relaxed";
 }
 def SImm32AsmOperandClass
     : SImmAsmOperandClass<32, [SImm32RelaxedAsmOperandClass]> {
-  let PredicateMethod = "isConstantSImm<32>";
+  let RenderMethod = "addConstantSImmOperands<32>";
+  let PredicateMethod = "isFoldedSImm<32>";
 }
 def ConstantUImm26AsmOperandClass
     : ConstantUImmAsmOperandClass<26, [SImm32AsmOperandClass]>;
@@ -875,8 +877,8 @@ def imm64: Operand<i64>;
 // Like imm64 but only a constant at parse time, for the macros that expand one.
 def ConstantImm64AsmOperandClass : AsmOperandClass {
   let Name = "ConstantImm64";
-  let RenderMethod = "addImmOperands";
-  let PredicateMethod = "isConstantImm";
+  let RenderMethod = "addFoldedImmOperands";
+  let PredicateMethod = "isFoldedImm";
   let SuperClasses = [ImmAsmOperand];
   let DiagnosticType = "ConstantImm64";
 }

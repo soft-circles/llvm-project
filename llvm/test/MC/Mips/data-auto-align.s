@@ -1,6 +1,9 @@
 # RUN: llvm-mc -triple=mips -filetype=obj %s -o - \
 # RUN:   | llvm-objdump -t -s -j .text -j .data - | FileCheck %s
 # RUN: llvm-mc -triple=mips %s | FileCheck %s --check-prefix=ASM
+## The text form reassembles to the same symbols and bytes.
+# RUN: llvm-mc -triple=mips %s | llvm-mc -triple=mips -filetype=obj - -o - \
+# RUN:   | llvm-objdump -t -s -j .text -j .data - | FileCheck %s
 
 ## GAS aligns .half, .short, .hword, .word, .int, .long and .dword data to its
 ## size, and moves the labels at the current position to the aligned address.
@@ -35,16 +38,21 @@
 # CHECK-NEXT:  0040 01000000 0c010000 0000000d 01010000
 # CHECK-NEXT:  0050 0000000e 01780000 0000000f
 
-## The text form prints the padding after the label.
+## The text form prints the padding as .align, which moves the labels in
+## front of it again when reassembled.
 # ASM:      a:
 # ASM-NEXT:   .2byte 2
 # ASM:      b:
-# ASM-NEXT:   .p2align 1, 0x0
+# ASM-NEXT:   .align 1
 # ASM-NEXT:   .2byte 3
-# ASM:      l:
+# ASM:      k:
+# ASM-NEXT:   .align 3
+# ASM-NEXT:   .8byte 11
+# ASM:        .align 0
+# ASM-NEXT: l:
 # ASM-NEXT:   .4byte 12
 # ASM:      m:
-# ASM-NEXT:   .p2align 2, 0x0
+# ASM-NEXT:   .align 2
 # ASM-NEXT:   .4byte 13
 
 	.data
