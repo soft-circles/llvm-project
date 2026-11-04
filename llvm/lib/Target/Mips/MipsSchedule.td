@@ -58,6 +58,7 @@ def II_CFC1             : InstrItinClass;
 def II_CFC2             : InstrItinClass;
 def II_CLO              : InstrItinClass;
 def II_CLZ              : InstrItinClass;
+def II_COP2             : InstrItinClass;
 def II_CRC32B           : InstrItinClass;
 def II_CRC32CB          : InstrItinClass;
 def II_CRC32CD          : InstrItinClass;
@@ -622,6 +623,7 @@ def MipsGenericItineraries : ProcessorItineraries<[ALU, IMULDIV], [], [
   InstrItinData<II_CFC1            , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_CTC1            , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_CFC2            , [InstrStage<2,  [ALU]>]>,
+  InstrItinData<II_COP2            , [InstrStage<1,  [ALU]>]>,
   InstrItinData<II_CTC2            , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_MOVF_D          , [InstrStage<2,  [ALU]>]>,
   InstrItinData<II_MOVF_S          , [InstrStage<2,  [ALU]>]>,
