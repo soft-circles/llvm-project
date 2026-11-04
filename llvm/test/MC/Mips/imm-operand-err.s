@@ -1,6 +1,7 @@
-## Print an error if a non-immediate operand is used while an immediate is expected
-# RUN: not llvm-mc -filetype=obj -triple=mips -o /dev/null %s 2>&1 | FileCheck %s --implicit-check-not=error:
-# RUN: not llvm-mc -filetype=obj -triple=mips64 -o /dev/null %s 2>&1 | FileCheck %s --implicit-check-not=error:
+## Print an error if a microMIPS immediate needs a relocation. The standard
+## encodings get R_MIPS_LO16 instead (logical-imm-symbol.s).
+# RUN: not llvm-mc -filetype=obj -triple=mips -mcpu=mips32r2 -mattr=+micromips \
+# RUN:   -o /dev/null %s 2>&1 | FileCheck %s --implicit-check-not=error:
 
 # CHECK: [[#@LINE+1]]:16: error: unsupported relocation type
   ori  $4, $4, start

@@ -971,13 +971,16 @@ let AdditionalPredicates = [NotInMicroMips] in {
                       (DADDiu GPR64Opnd:$rs, GPR64Opnd:$rs, simm16_64:$imm),
                       0>, ISA_MIPS3;
 
-  defm : OneOrTwoOperandMacroImmediateAlias<"and", ANDi64, GPR64Opnd, imm64>,
+  defm : OneOrTwoOperandMacroImmediateAlias<"and", ANDi64, GPR64Opnd,
+                                            imm64_const>,
          ISA_MIPS3, GPR_64;
 
-  defm : OneOrTwoOperandMacroImmediateAlias<"or", ORi64, GPR64Opnd, imm64>,
+  defm : OneOrTwoOperandMacroImmediateAlias<"or", ORi64, GPR64Opnd,
+                                            imm64_const>,
          ISA_MIPS3, GPR_64;
 
-  defm : OneOrTwoOperandMacroImmediateAlias<"xor", XORi64, GPR64Opnd, imm64>,
+  defm : OneOrTwoOperandMacroImmediateAlias<"xor", XORi64, GPR64Opnd,
+                                            imm64_const>,
          ISA_MIPS3, GPR_64;
 }
 let AdditionalPredicates = [NotInMicroMips] in {
@@ -1141,7 +1144,7 @@ let AdditionalPredicates = [NotInMicroMips] in {
                                      "ddiv\t$rd, $rs, $rt">,
                    ISA_MIPS3_NOT_32R6_64R6;
   def DSDivIMacro : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
-                                      (ins GPR64Opnd:$rs, imm64:$imm),
+                                      (ins GPR64Opnd:$rs, imm64_const:$imm),
                                       "ddiv\t$rd, $rs, $imm">,
                     ISA_MIPS3_NOT_32R6_64R6;
   def DUDivMacro : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
@@ -1149,7 +1152,7 @@ let AdditionalPredicates = [NotInMicroMips] in {
                                      "ddivu\t$rd, $rs, $rt">,
                    ISA_MIPS3_NOT_32R6_64R6;
   def DUDivIMacro : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
-                                      (ins GPR64Opnd:$rs, imm64:$imm),
+                                      (ins GPR64Opnd:$rs, imm64_const:$imm),
                                       "ddivu\t$rd, $rs, $imm">,
                     ISA_MIPS3_NOT_32R6_64R6;
 
@@ -1163,7 +1166,7 @@ let AdditionalPredicates = [NotInMicroMips] in {
         ISA_MIPS3_NOT_32R6_64R6;
   def : MipsInstAlias<"ddiv $rd, $imm", (DSDivIMacro GPR64Opnd:$rd,
                                                      GPR64Opnd:$rd,
-                                                     imm64:$imm), 0>,
+                                                     imm64_const:$imm), 0>,
         ISA_MIPS3_NOT_32R6_64R6;
 
   // GAS expands 'divu' and 'ddivu' differently when the destination
@@ -1176,7 +1179,7 @@ let AdditionalPredicates = [NotInMicroMips] in {
         ISA_MIPS3_NOT_32R6_64R6;
   def : MipsInstAlias<"ddivu $rd, $imm", (DUDivIMacro GPR64Opnd:$rd,
                                                       GPR64Opnd:$rd,
-                                                      imm64:$imm), 0>,
+                                                      imm64_const:$imm), 0>,
         ISA_MIPS3_NOT_32R6_64R6;
   def DSRemMacro : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
                                      (ins GPR64Opnd:$rs, GPR64Opnd:$rt),
@@ -1212,61 +1215,61 @@ let AdditionalPredicates = [NotInMicroMips] in {
         ISA_MIPS3_NOT_32R6_64R6;
 }
 
-def NORImm64 : NORIMM_DESC_BASE<GPR64Opnd, imm64>, GPR_64;
+def NORImm64 : NORIMM_DESC_BASE<GPR64Opnd, imm64_const>, GPR_64;
 def : MipsInstAlias<"nor\t$rs, $imm", (NORImm64 GPR64Opnd:$rs, GPR64Opnd:$rs,
-                                                imm64:$imm)>, GPR_64;
+                                                imm64_const:$imm)>, GPR_64;
 def SLTImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rs),
-                                 (ins GPR64Opnd:$rt, imm64:$imm),
+                                 (ins GPR64Opnd:$rt, imm64_const:$imm),
                                  "slt\t$rs, $rt, $imm">, GPR_64;
 def : MipsInstAlias<"slt\t$rs, $imm", (SLTImm64 GPR64Opnd:$rs, GPR64Opnd:$rs,
-                                                imm64:$imm)>, GPR_64;
+                                                imm64_const:$imm)>, GPR_64;
 def SLTUImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rs),
-                                  (ins GPR64Opnd:$rt, imm64:$imm),
+                                  (ins GPR64Opnd:$rt, imm64_const:$imm),
                                   "sltu\t$rs, $rt, $imm">, GPR_64;
 def : MipsInstAlias<"sltu\t$rs, $imm", (SLTUImm64 GPR64Opnd:$rs, GPR64Opnd:$rs,
-                                                  imm64:$imm)>, GPR_64;
+                                                  imm64_const:$imm)>, GPR_64;
 
 def SGEImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
-                                 (ins GPR64Opnd:$rs, imm64:$imm),
+                                 (ins GPR64Opnd:$rs, imm64_const:$imm),
                                  "sge\t$rd, $rs, $imm">, GPR_64;
 def : MipsInstAlias<"sge $rs, $imm", (SGEImm64 GPR64Opnd:$rs,
                                                GPR64Opnd:$rs,
-                                               imm64:$imm), 0>, GPR_64;
+                                               imm64_const:$imm), 0>, GPR_64;
 
 def SGEUImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
-                                  (ins GPR64Opnd:$rs, imm64:$imm),
+                                  (ins GPR64Opnd:$rs, imm64_const:$imm),
                                   "sgeu\t$rd, $rs, $imm">, GPR_64;
 def : MipsInstAlias<"sgeu $rs, $imm", (SGEUImm64 GPR64Opnd:$rs,
                                                  GPR64Opnd:$rs,
-                                                 imm64:$imm), 0>, GPR_64;
+                                                 imm64_const:$imm), 0>, GPR_64;
 
 def SGTImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
-                                 (ins GPR64Opnd:$rs, imm64:$imm),
+                                 (ins GPR64Opnd:$rs, imm64_const:$imm),
                                  "sgt\t$rd, $rs, $imm">, GPR_64;
 def : MipsInstAlias<"sgt $rs, $imm", (SGTImm64 GPR64Opnd:$rs,
                                                GPR64Opnd:$rs,
-                                               imm64:$imm), 0>, GPR_64;
+                                               imm64_const:$imm), 0>, GPR_64;
 
 def SGTUImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
-                                  (ins GPR64Opnd:$rs, imm64:$imm),
+                                  (ins GPR64Opnd:$rs, imm64_const:$imm),
                                   "sgtu\t$rd, $rs, $imm">, GPR_64;
 def : MipsInstAlias<"sgtu $rs, $imm", (SGTUImm64 GPR64Opnd:$rs,
                                                  GPR64Opnd:$rs,
-                                                 imm64:$imm), 0>, GPR_64;
+                                                 imm64_const:$imm), 0>, GPR_64;
 
 def SLEImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
-                                 (ins GPR64Opnd:$rs, imm64:$imm),
+                                 (ins GPR64Opnd:$rs, imm64_const:$imm),
                                  "sle\t$rd, $rs, $imm">, GPR_64;
 def : MipsInstAlias<"sle $rs, $imm", (SLEImm64 GPR64Opnd:$rs,
                                                GPR64Opnd:$rs,
-                                               imm64:$imm), 0>, GPR_64;
+                                               imm64_const:$imm), 0>, GPR_64;
 
 def SLEUImm64 : MipsAsmPseudoInst<(outs GPR64Opnd:$rd),
-                                  (ins GPR64Opnd:$rs, imm64:$imm),
+                                  (ins GPR64Opnd:$rs, imm64_const:$imm),
                                   "sleu\t$rd, $rs, $imm">, GPR_64;
 def : MipsInstAlias<"sleu $rs, $imm", (SLEUImm64 GPR64Opnd:$rs,
                                                  GPR64Opnd:$rs,
-                                                 imm64:$imm), 0>, GPR_64;
+                                                 imm64_const:$imm), 0>, GPR_64;
 
 def : MipsInstAlias<"rdhwr $rt, $rs",
                     (RDHWR64 GPR64Opnd:$rt, HWRegsOpnd:$rs, 0), 1>, GPR_64;

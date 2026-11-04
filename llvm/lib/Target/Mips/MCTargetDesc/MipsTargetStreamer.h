@@ -33,6 +33,16 @@ public:
 
   virtual void setPic(bool Value) {}
 
+  /// Emit ".align" as GAS does, which is also how it pads before .half,
+  /// .word, .float, .dword and similar data. The padding fills with \p Fill,
+  /// or with nops in code when there is none, and \p MaxBytes limits it if
+  /// nonzero. The object form also moves those of \p Labels still at the
+  /// current position past the padding; the text form prints the directive.
+  virtual void emitDirectiveAlign(Align Alignment, std::optional<int64_t> Fill,
+                                  unsigned MaxBytes,
+                                  ArrayRef<MCSymbol *> Labels,
+                                  const MCSubtargetInfo &STI);
+
   virtual void emitDirectiveSetMicroMips();
   virtual void emitDirectiveSetNoMicroMips();
   virtual void setUsesMicroMips();
@@ -219,6 +229,10 @@ class MipsTargetAsmStreamer : public MipsTargetStreamer {
 public:
   MipsTargetAsmStreamer(MCStreamer &S, formatted_raw_ostream &OS);
 
+  void emitDirectiveAlign(Align Alignment, std::optional<int64_t> Fill,
+                          unsigned MaxBytes, ArrayRef<MCSymbol *> Labels,
+                          const MCSubtargetInfo &STI) override;
+
   void emitGPRel32Value(const MCExpr *) override;
   void emitGPRel64Value(const MCExpr *) override;
   void emitDTPRel32Value(const MCExpr *) override;
@@ -331,12 +345,17 @@ class MipsTargetELFStreamer : public MipsTargetStreamer {
   const MCSubtargetInfo &STI;
   bool Pic;
 
+  bool isAtCurrentPos(const MCSymbol &Symbol);
+
 public:
   bool isMicroMipsEnabled() const { return MicroMipsEnabled; }
   MCELFStreamer &getStreamer();
   MipsTargetELFStreamer(MCStreamer &S, const MCSubtargetInfo &STI);
 
   void setPic(bool Value) override { Pic = Value; }
+  void emitDirectiveAlign(Align Alignment, std::optional<int64_t> Fill,
+                          unsigned MaxBytes, ArrayRef<MCSymbol *> Labels,
+                          const MCSubtargetInfo &STI) override;
 
   void emitLabel(MCSymbol *Symbol) override;
   void emitAssignment(MCSymbol *Symbol, const MCExpr *Value) override;
