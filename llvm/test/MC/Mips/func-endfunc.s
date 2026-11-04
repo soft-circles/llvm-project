@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple=mips %s | FileCheck %s
+# RUN: llvm-mc -triple=mips %s | FileCheck %s --implicit-check-not=func
 # RUN: not llvm-mc -triple=mips --defsym ERR=1 %s -o /dev/null 2>&1 \
 # RUN:   | FileCheck %s --check-prefix=ERR --implicit-check-not=error:
 
@@ -9,7 +9,6 @@
 # CHECK-NEXT:   nop
 # CHECK-NEXT: bar:
 # CHECK-NEXT:   nop
-# CHECK-NOT:  func
 	.text
 	.func foo
 foo:
@@ -31,6 +30,8 @@ bar:
 	.endfunc
 # ERR: :[[#@LINE+1]]:8: error: expected identifier
 	.func 1
+# ERR: :[[#@LINE+1]]:11: error: expected identifier
+	.func e, 1
 # ERR: :[[#@LINE+1]]:10: error: expected newline
 	.func c d
 .endif

@@ -50,12 +50,31 @@
 # N64:      8c 49 00 00  lw $9, 0x0($2)
 # N64-NEXT:   R_MIPS_LO16/R_MIPS_NONE/R_MIPS_NONE .data+0x10002
 	lw $9, %lo(data) + 0x10000($2)
-## A full address with no base register is the lui/lw pair.
+## A full address with no base register is the lui/lw pair, or for N64 the
+## same sequence as "lw $9, data+4" (GAS uses $at and dsll32 there).
+# ASM:      lui $9, %hi(data+4)
+# ASM-NEXT: lw $9, %lo(data+4)($9)
 # O32:      3c 09 00 00  lui $9, 0x0
 # O32-NEXT:   R_MIPS_HI16 .data
 # O32-NEXT: 8d 29 00 06  lw $9, 0x6($9)
 # O32-NEXT:   R_MIPS_LO16 .data
+# N64:      3c 09 00 00  lui $9, 0x0
+# N64-NEXT:   R_MIPS_HIGHEST/R_MIPS_NONE/R_MIPS_NONE .data+0x6
+# N64:      8d 29 00 00  lw $9, 0x0($9)
+# N64-NEXT:   R_MIPS_LO16/R_MIPS_NONE/R_MIPS_NONE .data+0x6
 	lw $9, (data) + 4
+# ASM:      lui $9, %hi(data-4)
+# ASM-NEXT: lw $9, %lo(data-4)($9)
+# O32:      3c 09 00 00  lui $9, 0x0
+# O32-NEXT:   R_MIPS_HI16 .data
+# O32-NEXT: 8d 29 ff fe  lw $9, -0x2($9)
+# O32-NEXT:   R_MIPS_LO16 .data
+	lw $9, (data) - 4
+## With a base register after the addend.
+# ASM:      lui $9, %hi(data+4)
+# ASM-NEXT: addu $9, $9, $2
+# ASM-NEXT: lw $9, %lo(data+4)($9)
+	lw $9, (data) + 4($2)
 
 .ifdef ERR
 ## Only a plain %lo takes an addend after it. %lo(%neg(%gp_rel(X))) is a

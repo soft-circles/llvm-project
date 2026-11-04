@@ -52,9 +52,11 @@ MipsTargetStreamer::MipsTargetStreamer(MCStreamer &S)
   GPRInfoSet = FPRInfoSet = FrameInfoSet = false;
 }
 
-void MipsTargetStreamer::emitAutoAlignment(Align Alignment) {
+void MipsTargetStreamer::emitAutoAlignment(Align Alignment,
+                                           ArrayRef<MCSymbol *> Labels) {
   Streamer.emitValueToAlignment(Alignment);
 }
+
 void MipsTargetStreamer::emitGPRel32Value(const MCExpr *) {}
 void MipsTargetStreamer::emitGPRel64Value(const MCExpr *) {}
 void MipsTargetStreamer::emitDTPRel32Value(const MCExpr *) {}
@@ -940,23 +942,21 @@ bool MipsTargetELFStreamer::isAtCurrentPos(const MCSymbol &Symbol) {
          Symbol.getOffset() == DF->getContents().size();
 }
 
-void MipsTargetELFStreamer::emitAutoAlignment(Align Alignment) {
-  erase_if(LabelsAtCurPos, [&](MCSymbol *L) { return !isAtCurrentPos(*L); });
+void MipsTargetELFStreamer::emitAutoAlignment(Align Alignment,
+                                              ArrayRef<MCSymbol *> Labels) {
+  SmallVector<MCSymbol *, 4> ToMove;
+  copy_if(Labels, std::back_inserter(ToMove),
+          [&](MCSymbol *L) { return isAtCurrentPos(*L); });
   getStreamer().emitValueToAlignment(Alignment, /*Fill=*/0, /*FillLen=*/1,
                                      /*MaxBytesToEmit=*/0);
   MCDataFragment *DF = getStreamer().getOrCreateDataFragment();
-  for (MCSymbol *L : LabelsAtCurPos) {
+  for (MCSymbol *L : ToMove) {
     L->setFragment(DF);
     L->setOffset(DF->getContents().size());
   }
 }
 
 void MipsTargetELFStreamer::emitLabel(MCSymbol *S) {
-  // This runs before the streamer places S, so the labels still at the current
-  // position are the ones S shares it with.
-  erase_if(LabelsAtCurPos, [&](MCSymbol *L) { return !isAtCurrentPos(*L); });
-  LabelsAtCurPos.push_back(S);
-
   auto *Symbol = cast<MCSymbolELF>(S);
   getStreamer().getAssembler().registerSymbol(*Symbol);
   uint8_t Type = Symbol->getType();

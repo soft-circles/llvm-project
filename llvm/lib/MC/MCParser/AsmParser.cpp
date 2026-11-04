@@ -179,7 +179,7 @@ private:
   // Is alt macro mode enabled.
   bool AltMacroMode = false;
 
-  /// Are we between .func and .endfunc?
+  // Are we between .func and .endfunc?
   bool InsideFunc = false;
 
 protected:
@@ -527,8 +527,6 @@ private:
     DK_ULEB128,
     DK_ERR,
     DK_ERROR,
-    DK_FUNC,
-    DK_ENDFUNC,
     DK_WARNING,
     DK_PRINT,
     DK_ADDRSIG,
@@ -538,6 +536,8 @@ private:
     DK_LTO_SET_CONDITIONAL,
     DK_CFI_MTE_TAGGED_FRAME,
     DK_MEMTAG,
+    DK_FUNC,
+    DK_ENDFUNC,
     DK_END
   };
 
@@ -5376,12 +5376,12 @@ bool AsmParser::parseDirectiveEnd(SMLoc DirectiveLoc) {
 /// GAS emits debug information for these only with --gstabs, so they are
 /// otherwise accepted and ignored.
 bool AsmParser::parseDirectiveFunc(SMLoc DirectiveLoc) {
-  StringRef Name;
+  StringRef Name, Label;
   if (Lexer.isNot(AsmToken::EndOfStatement)) {
     if (check(parseIdentifier(Name), "expected identifier"))
       return true;
     if (parseOptionalToken(AsmToken::Comma) &&
-        check(parseIdentifier(Name), "expected identifier"))
+        check(parseIdentifier(Label), "expected identifier"))
       return true;
   }
   if (parseEOL())

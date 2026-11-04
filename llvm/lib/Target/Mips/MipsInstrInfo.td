@@ -878,6 +878,7 @@ def ConstantImm64AsmOperandClass : AsmOperandClass {
   let RenderMethod = "addImmOperands";
   let PredicateMethod = "isConstantImm";
   let SuperClasses = [ImmAsmOperand];
+  let DiagnosticType = "ConstantImm64";
 }
 def imm64_const : Operand<i64> {
   let ParserMatchClass = ConstantImm64AsmOperandClass;

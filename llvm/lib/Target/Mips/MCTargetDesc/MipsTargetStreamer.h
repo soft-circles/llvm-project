@@ -34,9 +34,10 @@ public:
   virtual void setPic(bool Value) {}
 
   /// Pad the current section to \p Alignment before .half, .word or .dword
-  /// data, as GAS does. The object form also moves the labels at the current
-  /// position past the padding; the text form prints them before it.
-  virtual void emitAutoAlignment(Align Alignment);
+  /// data, as GAS does. The object form also moves those of \p Labels still
+  /// at the current position past the padding; the text form prints them
+  /// before it.
+  virtual void emitAutoAlignment(Align Alignment, ArrayRef<MCSymbol *> Labels);
 
   virtual void emitDirectiveSetMicroMips();
   virtual void emitDirectiveSetNoMicroMips();
@@ -335,9 +336,6 @@ class MipsTargetELFStreamer : public MipsTargetStreamer {
   bool MicroMipsEnabled;
   const MCSubtargetInfo &STI;
   bool Pic;
-  /// The labels defined at the current position, which emitAutoAlignment
-  /// moves.
-  SmallVector<MCSymbol *, 4> LabelsAtCurPos;
 
   bool isAtCurrentPos(const MCSymbol &Symbol);
 
@@ -347,7 +345,7 @@ public:
   MipsTargetELFStreamer(MCStreamer &S, const MCSubtargetInfo &STI);
 
   void setPic(bool Value) override { Pic = Value; }
-  void emitAutoAlignment(Align Alignment) override;
+  void emitAutoAlignment(Align Alignment, ArrayRef<MCSymbol *> Labels) override;
 
   void emitLabel(MCSymbol *Symbol) override;
   void emitAssignment(MCSymbol *Symbol, const MCExpr *Value) override;

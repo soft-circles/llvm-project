@@ -302,7 +302,9 @@ void MipsAsmBackend::applyFixup(const MCFragment &F, const MCFixup &Fixup,
     }
   }
   maybeAddReloc(F, Fixup, Target, Value, IsResolved);
-  // A REL addend keeps only the low 16 bits, as with %lo.
+  // A REL addend keeps only the low 16 bits, as with %lo. This is done here
+  // rather than in adjustFixupValue, which can't tell a relocation from a
+  // resolved value.
   if (IsAnyImm16Reloc)
     Value &= 0xffff;
   Value = adjustFixupValue(Fixup, Value, Ctx);

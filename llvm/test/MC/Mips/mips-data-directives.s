@@ -12,7 +12,7 @@
 # CHECK-ASM: .8byte label
 # CHECK-ASM: .2byte label
 
-# Checking if the data and reloations were correctly emitted. As in GAS, each
+# Checking if the data and relocations were correctly emitted. As in GAS, each
 # .word, .dword and .hword is aligned to its size.
 # CHECK-OBJ:  Section {
 # CHECK-OBJ:    Name: .data

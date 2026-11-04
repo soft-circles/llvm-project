@@ -5,8 +5,8 @@
 ## GAS aligns .half, .short, .hword, .word, .int, .long and .dword data to its
 ## size, and moves the labels at the current position to the aligned address.
 ## .2byte, .4byte and .8byte are not aligned. ".align 0" turns this off until
-## the next nonzero .align or section change. The symbols and bytes match
-## GNU as 2.47.
+## the next nonzero .align or section directive. The symbols and bytes match
+## GNU as 2.47; data-auto-align-more.s has the other directives.
 
 # CHECK:      00000001 l .data 00000000 a
 # CHECK-NEXT: 00000004 l .data 00000000 b
@@ -22,9 +22,9 @@
 # CHECK-NEXT: 00000041 l .data 00000000 l
 # CHECK-NEXT: 00000048 l .data 00000000 m
 # CHECK-NEXT: 00000050 l .data 00000000 n
-# CHECK-NEXT: 00000055 l .data 00000000 q
-# CHECK-NEXT: 00000058 l .data 00000000 o
-# CHECK-NEXT: 00000002 l .text 00000000 p
+# CHECK-NEXT: 00000055 l .data 00000000 o
+# CHECK-NEXT: 00000058 l .data 00000000 p
+# CHECK-NEXT: 00000002 l .text 00000000 q
 # CHECK:      Contents of section .text:
 # CHECK-NEXT:  0000 01000010
 # CHECK:      Contents of section .data:
@@ -84,8 +84,8 @@ m:	.word 13
 n:	.word 14
 	.byte 1
 ## A label in front of other data stays put.
-q:	.ascii "x"
-o:	.word 15
+o:	.ascii "x"
+p:	.word 15
 	.text
 	.byte 1
-p:	.half 16
+q:	.half 16

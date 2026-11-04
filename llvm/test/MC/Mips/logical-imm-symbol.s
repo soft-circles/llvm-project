@@ -2,6 +2,9 @@
 # RUN:   | llvm-objdump -dr - | FileCheck %s --check-prefix=O32
 # RUN: llvm-mc -triple=mips64 -mcpu=mips3 -filetype=obj %s -o - \
 # RUN:   | llvm-objdump -dr - | FileCheck %s --check-prefix=N64
+# RUN: not llvm-mc -triple=mips -mcpu=mips64r2 --defsym MM=1 -filetype=obj \
+# RUN:   %s -o /dev/null 2>&1 \
+# RUN:   | FileCheck %s --check-prefix=MM --implicit-check-not=error:
 
 ## GAS relocates a symbol in the immediate of an I-type instruction with
 ## R_MIPS_LO16, lui included. A REL addend keeps its low 16 bits and a RELA one
@@ -50,6 +53,12 @@
 # N64:      24 63 00 00  addiu $3, $3, 0x0
 # N64-NEXT:   R_MIPS_LO16/R_MIPS_NONE/R_MIPS_NONE .data{{$}}
 	addiu $3, $3, data-4
+## A negative addend wraps in the REL field.
+# O32:      34 63 ff fc  ori $3, $3, 0xfffc
+# O32-NEXT:   R_MIPS_LO16 .data
+# N64:      34 63 00 00  ori $3, $3, 0x0
+# N64-NEXT:   R_MIPS_LO16/R_MIPS_NONE/R_MIPS_NONE .data-0x4
+	ori $3, $3, data-8
 # O32:      34 63 00 00  ori $3, $3, 0x0
 # O32-NEXT:   R_MIPS_LO16 ext
 # N64:      34 63 00 00  ori $3, $3, 0x0
@@ -61,6 +70,15 @@
 # N64:      34 63 00 08  ori $3, $3, 0x8
 # N64-NOT:  R_MIPS
 	ori $3, $3, (e - s)
+
+.ifdef MM
+## The check is per instruction: only the microMIPS one has no relocation.
+	.set micromips
+# MM: :[[#@LINE+1]]:14: error: unsupported relocation type
+	ori $4, $4, data
+	.set nomicromips
+	ori $4, $4, data
+.endif
 
 	.data
 	.word 0

@@ -166,10 +166,15 @@ class MipsAsmParser : public MCTargetAsmParser {
   // Map of register aliases created via the .set directive.
   StringMap<RegisterSetAlias> RegisterSets;
 
-  /// The section in which ".align 0" turned off the automatic alignment of
-  /// .half, .word and .dword data, or null if it is on. As in GAS, it turns
-  /// back on at the next section change or nonzero .align.
-  const MCSection *AutoAlignOffIn = nullptr;
+  // Whether ".align 0" turned off the automatic alignment of .half, .word,
+  // .dword and similar data. As in GAS, a section directive or a nonzero
+  // .align turns it back on.
+  bool AutoAlignOff = false;
+
+  // The labels parsed since the last section directive that may still be at
+  // the current position, which the automatic alignment moves past its
+  // padding.
+  SmallVector<MCSymbol *, 4> AutoAlignLabels;
 
   // Print a warning along with its fix-it message at the given range.
   void printWarningWithFixIt(const Twine &Msg, const Twine &FixMsg,
@@ -205,6 +210,8 @@ class MipsAsmParser : public MCTargetAsmParser {
                         SMLoc NameLoc, OperandVector &Operands) override;
 
   bool ParseDirective(AsmToken DirectiveID) override;
+  void onLabelParsed(MCSymbol *Symbol) override;
+  void autoAlignData(StringRef IDVal);
 
   ParseStatus parseMemOperand(OperandVector &Operands);
   ParseStatus matchAnyRegisterNameWithoutDollar(OperandVector &Operands,
@@ -6131,6 +6138,9 @@ bool MipsAsmParser::matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_UImm32_Coerced:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected 32-bit immediate");
+  case Match_ConstantImm64:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected constant immediate");
   case Match_MemSImm9:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected memory with 9-bit signed offset");
@@ -6589,7 +6599,7 @@ ParseStatus MipsAsmParser::parseMemOperand(OperandVector &Operands) {
       }
       // Zero register assumed, add a memory operand with ZERO as its base.
       // "Base" will be managed by k_Memory.
-      auto AddZeroBaseMem = [&]() {
+      auto addZeroBaseMem = [&] {
         SMLoc E =
             SMLoc::getFromPointer(Parser.getTok().getLoc().getPointer() - 1);
         auto Base = MipsOperand::createGPRReg(
@@ -6599,7 +6609,7 @@ ParseStatus MipsAsmParser::parseMemOperand(OperandVector &Operands) {
         return ParseStatus::Success;
       };
       if (Tok.is(AsmToken::EndOfStatement))
-        return AddZeroBaseMem();
+        return addZeroBaseMem();
       MCBinaryExpr::Opcode Opcode;
       // GAS and LLVM treat comparison operators different. GAS will generate -1
       // or 0, while LLVM will generate 0 or 1. Since a comparsion operator is
@@ -6655,7 +6665,7 @@ ParseStatus MipsAsmParser::parseMemOperand(OperandVector &Operands) {
       IdVal = MCBinaryExpr::create(Opcode, IdVal, NextExpr, getContext());
       // GAS also takes "(sym) + 4" with no base register.
       if (Parser.getTok().is(AsmToken::EndOfStatement))
-        return AddZeroBaseMem();
+        return addZeroBaseMem();
     }
 
     Parser.Lex(); // Eat the '(' token.
@@ -8659,6 +8669,49 @@ bool MipsAsmParser::parseFpABIValue(MipsABIFlagsSection::FpABIKind &FpABI,
   return false;
 }
 
+void MipsAsmParser::onLabelParsed(MCSymbol *Symbol) {
+  // The text form doesn't move labels, and only the labels Symbol shares its
+  // position with can still be moved.
+  if (!getStreamer().getAssemblerPtr())
+    return;
+  erase_if(AutoAlignLabels, [&](MCSymbol *L) {
+    return L->getFragment() != Symbol->getFragment() ||
+           L->getOffset() != Symbol->getOffset();
+  });
+  AutoAlignLabels.push_back(Symbol);
+}
+
+/// Pad the current section before a data directive that GAS aligns to its
+/// size (unlike .2byte, .4byte and .8byte), and track the state that turns
+/// this off and on. The directive itself is left to its parser.
+void MipsAsmParser::autoAlignData(StringRef IDVal) {
+  std::string Name = IDVal.lower();
+  if (StringSwitch<bool>(Name)
+          .Cases(".text", ".data", ".bss", ".rdata", ".sdata", ".sbss", true)
+          .Cases(".section", ".pushsection", ".popsection", ".previous",
+                 ".subsection", true)
+          .Default(false)) {
+    AutoAlignOff = false;
+    AutoAlignLabels.clear();
+    return;
+  }
+  if (Name == ".align") {
+    const AsmToken &Tok = getParser().getTok();
+    AutoAlignOff = Tok.is(AsmToken::Integer) && Tok.getIntVal() == 0;
+    return;
+  }
+  unsigned Size = StringSwitch<unsigned>(Name)
+                      .Cases(".half", ".hword", ".short", 2)
+                      .Cases(".word", ".int", ".long", 4)
+                      .Cases(".float", ".single", ".gpword", 4)
+                      .Cases(".dword", ".quad", ".double", ".gpdword", 8)
+                      .Default(0);
+  if (!Size || AutoAlignOff || !getStreamer().getCurrentSectionOnly())
+    return;
+  getTargetStreamer().emitAutoAlignment(Align(Size), AutoAlignLabels);
+  AutoAlignLabels.clear();
+}
+
 bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   // This returns false if this function recognizes the directive
   // regardless of whether it is successfully handles or reports an
@@ -8668,28 +8721,7 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   MCAsmParser &Parser = getParser();
   StringRef IDVal = DirectiveID.getString();
 
-  const MCSection *CurSection = getStreamer().getCurrentSectionOnly();
-  if (AutoAlignOffIn != CurSection)
-    AutoAlignOffIn = nullptr;
-  if (IDVal == ".align") {
-    // Let the generic parser handle the directive itself.
-    const AsmToken &Tok = Parser.getTok();
-    bool IsZero = Tok.is(AsmToken::Integer) && Tok.getIntVal() == 0;
-    AutoAlignOffIn = IsZero ? CurSection : nullptr;
-    return true;
-  }
-  // GAS aligns these to their size, unlike .2byte, .4byte and .8byte. Align
-  // here and let the generic parser emit the data.
-  unsigned AutoAlignSize = StringSwitch<unsigned>(IDVal)
-                               .Cases(".half", ".hword", ".short", 2)
-                               .Cases(".word", ".int", ".long", 4)
-                               .Case(".dword", 8)
-                               .Default(0);
-  if (AutoAlignSize) {
-    if (!AutoAlignOffIn && CurSection)
-      getTargetStreamer().emitAutoAlignment(Align(AutoAlignSize));
-    return true;
-  }
+  autoAlignData(IDVal);
 
   if (IDVal == ".cpadd") {
     parseDirectiveCpAdd(DirectiveID.getLoc());
