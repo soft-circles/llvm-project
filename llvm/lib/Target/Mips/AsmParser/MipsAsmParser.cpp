@@ -8688,6 +8688,7 @@ void MipsAsmParser::autoAlignData(StringRef IDVal) {
   std::string Name = IDVal.lower();
   if (StringSwitch<bool>(Name)
           .Cases(".text", ".data", ".bss", ".rdata", ".sdata", ".sbss", true)
+          .Cases(".rodata", ".tdata", ".tbss", true)
           .Cases(".section", ".pushsection", ".popsection", ".previous",
                  ".subsection", true)
           .Default(false)) {

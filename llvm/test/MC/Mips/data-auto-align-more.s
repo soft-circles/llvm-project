@@ -18,23 +18,26 @@
 # CHECK-NEXT: 00000048 l .data 00000000 prev
 # CHECK-NEXT: 00000050 l .data 00000000 sub
 # CHECK-NEXT: 00000004 l .sdata 00000000 sd
+# CHECK-NEXT: 0000000c l .sdata 00000000 rd
 # CHECK-NEXT: 00000055 l .data 00000000 stay
 # CHECK-NEXT: 00000058 l .data 00000000 after
-# CHECK-NEXT: 0000005c l .data 00000003 foo
+# CHECK-NEXT: 0000005d l .data 00000000 stay2
+# CHECK-NEXT: 00000060 l .data 00000000 num
+# CHECK-NEXT: 00000064 l .data 00000003 foo
 # CHECK-NEXT: 00000003 l *ABS* 00000000 len
-# CHECK-NEXT: 0000005f l .data 00000000 dot
-# CHECK-NEXT: 00000060 l .data 00000000 bar
+# CHECK-NEXT: 00000067 l .data 00000000 dot
+# CHECK-NEXT: 00000068 l .data 00000000 bar
 # CHECK:      Contents of section .data:
 # CHECK-NEXT:  0000 01000000 3f800000 40000000 00000000
 # CHECK-NEXT:  0010 3ff00000 00000000 01000000 00000000
 # CHECK-NEXT:  0020 00000000 00000004 00000005 00000006
 # CHECK-NEXT:  0030 01000007 01000000 00000008 01000000
 # CHECK-NEXT:  0040 00000009 01000000 0000000a 01000000
-# CHECK-NEXT:  0050 0000000b 01000000 0000000c 01020300
-# CHECK-NEXT:  0060 00000003 0000005f
+# CHECK-NEXT:  0050 0000000b 01000000 0000000c 01020000
+# CHECK-NEXT:  0060 0000000f 01020300 00000003 00000067
 # CHECK-NOT:   Contents
 # CHECK:      Contents of section .sdata:
-# CHECK-NEXT:  0000 01000000 0000000d
+# CHECK-NEXT:  0000 01000000 0000000d 01000000 0000000e
 
 	.data
 	.byte 1
@@ -73,8 +76,13 @@ sub:	.word 11
 	.align 0
 	.sdata
 sd:	.word 13
+	.byte 1
+	.align 0
+	.rdata
+	.sdata
+rd:	.word 14
 
-## A label left behind by a section switch stays put.
+## A label left behind by a section switch, or by other data, stays put.
 	.data
 	.byte 1
 stay:
@@ -82,6 +90,9 @@ stay:
 	nop
 	.data
 after:	.word 12
+	.byte 1
+stay2:	.byte 2
+num:	.word 15
 
 ## The temporary labels behind "." are not moved, so sizes and offsets
 ## measured with it don't count the padding.

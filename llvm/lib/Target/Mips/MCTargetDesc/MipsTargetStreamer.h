@@ -33,10 +33,10 @@ public:
 
   virtual void setPic(bool Value) {}
 
-  /// Pad the current section to \p Alignment before .half, .word or .dword
-  /// data, as GAS does. The object form also moves those of \p Labels still
-  /// at the current position past the padding; the text form prints them
-  /// before it.
+  /// Pad the current section to \p Alignment before data that GAS aligns to
+  /// its size, such as .half, .word, .float or .dword. The object form also
+  /// moves those of \p Labels still at the current position past the padding;
+  /// the text form prints them before it.
   virtual void emitAutoAlignment(Align Alignment, ArrayRef<MCSymbol *> Labels);
 
   virtual void emitDirectiveSetMicroMips();
