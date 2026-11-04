@@ -156,8 +156,15 @@ class MipsAsmParser : public MCTargetAsmParser {
   /// If true, then CpSaveLocation is a register, otherwise it's an offset.
   bool     CpSaveLocationIsRegister;
 
+  /// A register alias created via the .set directive.
+  struct RegisterSetAlias {
+    AsmToken Reg;
+    /// The symbol's variable value when the alias was made, or null if it had
+    /// none. Any later assignment to the symbol changes it and ends the alias.
+    const MCExpr *Value;
+  };
   // Map of register aliases created via the .set directive.
-  StringMap<AsmToken> RegisterSets;
+  StringMap<RegisterSetAlias> RegisterSets;
 
   // Print a warning along with its fix-it message at the given range.
   void printWarningWithFixIt(const Twine &Msg, const Twine &FixMsg,
@@ -200,6 +207,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   ParseStatus matchAnyRegisterWithoutDollar(OperandVector &Operands,
                                             const AsmToken &Token, SMLoc S);
   ParseStatus matchAnyRegisterWithoutDollar(OperandVector &Operands, SMLoc S);
+  ParseStatus matchRegisterSetAlias(OperandVector &Operands, StringRef Name,
+                                    SMLoc S);
   ParseStatus parseAnyRegister(OperandVector &Operands);
   ParseStatus parseImm(OperandVector &Operands);
   ParseStatus parseJumpTarget(OperandVector &Operands);
@@ -6099,6 +6108,9 @@ bool MipsAsmParser::matchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   case Match_UImm20_0:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected 20-bit unsigned immediate");
+  case Match_UImm25_0:
+    return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
+                 "expected 25-bit unsigned immediate");
   case Match_UImm26_0:
     return Error(RefineErrorLoc(IDLoc, Operands, ErrorInfo),
                  "expected 26-bit unsigned immediate");
@@ -6654,6 +6666,10 @@ ParseStatus MipsAsmParser::parseMemOperand(OperandVector &Operands) {
   return ParseStatus::Success;
 }
 
+static const MCExpr *getVariableValueOrNull(const MCSymbol *Sym) {
+  return (Sym && Sym->isVariable()) ? Sym->getVariableValue() : nullptr;
+}
+
 bool MipsAsmParser::searchSymbolAlias(OperandVector &Operands) {
   MCAsmParser &Parser = getParser();
   MCSymbol *Sym = getContext().lookupSymbol(Parser.getTok().getIdentifier());
@@ -6661,6 +6677,13 @@ bool MipsAsmParser::searchSymbolAlias(OperandVector &Operands) {
     return false;
 
   SMLoc S = Parser.getTok().getLoc();
+  // An alias for a numeric register outranks the symbol's value, which may be
+  // left over from before the alias was made.
+  if (matchRegisterSetAlias(Operands, Sym->getName(), S).isSuccess()) {
+    Parser.Lex();
+    return true;
+  }
+
   if (Sym->isVariable()) {
     const MCExpr *Expr = Sym->getVariableValue();
     if (Expr->getKind() == MCExpr::SymbolRef) {
@@ -6677,22 +6700,25 @@ bool MipsAsmParser::searchSymbolAlias(OperandVector &Operands) {
           llvm_unreachable("Should never fail");
       }
     }
-  } else if (Sym->isUnset()) {
-    // If symbol is unset, it might be created in the `parseSetAssignment`
-    // routine as an alias for a numeric register name.
-    // Lookup in the aliases list.
-    auto Entry = RegisterSets.find(Sym->getName());
-    if (Entry != RegisterSets.end()) {
-      ParseStatus Res =
-          matchAnyRegisterWithoutDollar(Operands, Entry->getValue(), S);
-      if (Res.isSuccess()) {
-        Parser.Lex();
-        return true;
-      }
-    }
   }
 
   return false;
+}
+
+ParseStatus MipsAsmParser::matchRegisterSetAlias(OperandVector &Operands,
+                                                 StringRef Name, SMLoc S) {
+  auto Entry = RegisterSets.find(Name);
+  if (Entry == RegisterSets.end())
+    return ParseStatus::NoMatch;
+
+  // A label, or any later assignment to the symbol, ends the alias.
+  MCSymbol *Sym = getContext().lookupSymbol(Name);
+  if (Sym && !Sym->isVariable() && !Sym->isUnset())
+    return ParseStatus::NoMatch;
+  if (getVariableValueOrNull(Sym) != Entry->getValue().Value)
+    return ParseStatus::NoMatch;
+
+  return matchAnyRegisterWithoutDollar(Operands, Entry->getValue().Reg, S);
 }
 
 ParseStatus MipsAsmParser::matchAnyRegisterNameWithoutDollar(
@@ -6809,7 +6835,16 @@ ParseStatus MipsAsmParser::parseAnyRegister(OperandVector &Operands) {
   }
   LLVM_DEBUG(dbgs() << ".. $\n");
 
-  ParseStatus Res = matchAnyRegisterWithoutDollar(Operands, S);
+  // A symbol whose name starts with '$' may alias a numeric register. As in GNU
+  // as, the alias outranks a register of the same name:
+  //   .set $v01, $1
+  ParseStatus Res = ParseStatus::NoMatch;
+  AsmToken Next = getLexer().peekTok(false);
+  if (Next.is(AsmToken::Identifier) && Next.getLoc() == Token.getEndLoc())
+    Res =
+        matchRegisterSetAlias(Operands, ("$" + Next.getIdentifier()).str(), S);
+  if (Res.isNoMatch())
+    Res = matchAnyRegisterWithoutDollar(Operands, S);
   if (Res.isSuccess()) {
     Parser.Lex(); // $
     Parser.Lex(); // identifier
@@ -7518,9 +7553,9 @@ bool MipsAsmParser::parseSetAssignment() {
     // Parse assignment of a numeric register:
     //   .set r1,$1
     Parser.Lex(); // Eat $.
-    RegisterSets[Name] = Parser.getTok();
+    MCSymbol *Sym = getContext().getOrCreateSymbol(Name);
+    RegisterSets[Name] = {Parser.getTok(), getVariableValueOrNull(Sym)};
     Parser.Lex(); // Eat identifier.
-    getContext().getOrCreateSymbol(Name);
     return false;
   }
 
