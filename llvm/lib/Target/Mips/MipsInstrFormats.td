@@ -201,6 +201,19 @@ class MFC3OP_FM<bits<6> op, bits<5> mfmt, bits<3> guest> : StdArch {
   let Inst{2-0}   = sel;
 }
 
+class CFC2_FM<bits<5> fmt> : StdArch {
+  bits<5> rt;
+  bits<5> rd;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x12;
+  let Inst{25-21} = fmt;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-0}  = 0;
+}
+
 class COP2_FM : StdArch {
   bits<25> imm;
 

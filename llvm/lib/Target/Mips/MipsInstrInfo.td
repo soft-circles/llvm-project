@@ -2452,6 +2452,12 @@ let AdditionalPredicates = [NotInMicroMips] in {
              MFC3OP_FM<0x12, 0, 0>, ISA_MIPS1;
   def MTC2 : MTC3OP<"mtc2", COP2Opnd, GPR32Opnd, II_MTC2>,
              MFC3OP_FM<0x12, 4, 0>, ISA_MIPS1;
+  def CFC2 : InstSE<(outs GPR32Opnd:$rt), (ins COP2Opnd:$rd),
+                    "cfc2\t$rt, $rd", [], II_CFC2, FrmFR, "cfc2">,
+             CFC2_FM<2>, ISA_MIPS1;
+  def CTC2 : InstSE<(outs COP2Opnd:$rd), (ins GPR32Opnd:$rt),
+                    "ctc2\t$rt, $rd", [], II_CTC2, FrmFR, "ctc2">,
+             CFC2_FM<6>, ISA_MIPS1;
 }
 
 /// Coprocessor 2 Operation

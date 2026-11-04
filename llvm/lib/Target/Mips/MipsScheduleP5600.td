@@ -94,7 +94,7 @@ def : InstRW<[P5600COP0], (instrs TLBINV, TLBINVF, TLBP, TLBR, TLBWI, TLBWR,
 
 def P5600COP2 : SchedWriteRes<[P5600IssueCTISTD, P5600CTISTD]>;
 
-def : InstRW<[P5600COP2], (instrs MFC2, MTC2, COP2_OP)> {
+def : InstRW<[P5600COP2], (instrs MFC2, MTC2, CFC2, CTC2, COP2_OP)> {
   let Unsupported = 1;
 }
 
