@@ -31,7 +31,7 @@ class LLVM_LIBRARY_VISIBILITY MipsTargetInfo : public TargetInfo {
     else if (ABI == "n32")
       Layout = "m:e-p:32:32-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
     else if (ABI == "o64")
-      Layout = "m:e-p:32:32-i8:8:32-i16:16:32-i64:64-i128:64-n32:64-S64";
+      Layout = "m:m-p:32:32-i8:8:32-i16:16:32-i64:64-i128:64-n32:64-S64";
     else if (ABI == "n64")
       Layout = "m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128";
     else

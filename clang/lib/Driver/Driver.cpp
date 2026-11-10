@@ -827,6 +827,9 @@ static llvm::Triple computeTargetTriple(const Driver &D,
         else if (Target.getEnvironment() == llvm::Triple::Musl ||
                  Target.getEnvironment() == llvm::Triple::MuslABIN32)
           Target.setEnvironment(llvm::Triple::MuslABI64);
+      } else if (ABIName == "o64") {
+        // o64 needs 64-bit GPRs but has no GNU environment of its own.
+        Target = Target.get64BitArchVariant();
       }
     }
   }

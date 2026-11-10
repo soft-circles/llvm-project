@@ -247,3 +247,29 @@
 // TARGET-N64: "-target-abi" "n64"
 // TARGET-N64: ld{{(.exe)?}}"
 // TARGET-N64: "-m" "elf64btsmip"
+
+// -mabi=o64 needs 64-bit GPRs, so it moves a 32-bit triple to its 64-bit
+// variant, as -mabi=64 does, but keeps the environment.
+// RUN: %clang --target=mips-elf -mabi=o64 -### -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=TARGET-O64 %s
+// TARGET-O64: "-triple" "mips64-unknown-unknown-elf"
+// TARGET-O64: "-target-cpu" "mips3"
+// TARGET-O64: "-target-abi" "o64"
+
+// RUN: %clang --target=mipsel-elf -mabi=o64 -### -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=TARGET-O64EL %s
+// TARGET-O64EL: "-triple" "mips64el-unknown-unknown-elf"
+// TARGET-O64EL: "-target-cpu" "mips3"
+// TARGET-O64EL: "-target-abi" "o64"
+
+// RUN: %clang --target=mips64-elf -mabi=o64 -### -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=TARGET-O64-64 %s
+// TARGET-O64-64: "-triple" "mips64-unknown-unknown-elf"
+// TARGET-O64-64: "-target-abi" "o64"
+
+// Linking o64 for Linux used to fall off the end of the lib suffix switch.
+// RUN: %clang --target=mips-linux-gnu -mabi=o64 -### %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=TARGET-O64-LINUX %s
+// TARGET-O64-LINUX: "-triple" "mips64-unknown-linux-gnu"
+// TARGET-O64-LINUX: "-target-abi" "o64"
+// TARGET-O64-LINUX: "-dynamic-linker" "/lib/ld.so.1"

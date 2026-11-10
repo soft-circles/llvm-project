@@ -133,6 +133,9 @@ std::string mips::getMipsABILibSuffix(const ArgList &Args,
   tools::mips::getMipsCPUAndABI(Args, Triple, CPUName, ABIName);
   return llvm::StringSwitch<std::string>(ABIName)
       .Case("o32", "")
+      // o64 objects are ELF32 like o32's, and o64 has no lib suffix of its
+      // own.
+      .Case("o64", "")
       .Case("n32", "32")
       .Case("n64", "64");
 }
