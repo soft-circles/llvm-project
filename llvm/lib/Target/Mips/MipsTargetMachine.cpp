@@ -89,7 +89,9 @@ static std::string computeDataLayout(const Triple &TT, StringRef CPU,
   else
     Ret += "E";
 
-  if (ABI.IsO32())
+  // O32 and O64 use '$' for private symbols (see MipsMCAsmInfo); N32/N64
+  // use '.L'.
+  if (ABI.IsO32() || ABI.IsO64())
     Ret += "-m:m";
   else
     Ret += "-m:e";

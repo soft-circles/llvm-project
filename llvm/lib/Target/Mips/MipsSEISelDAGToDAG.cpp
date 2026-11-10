@@ -123,13 +123,20 @@ bool MipsSEDAGToDAGISel::replaceUsesWithZeroReg(MachineRegisterInfo *MRI,
 void MipsSEDAGToDAGISel::emitMCountABI(MachineInstr &MI, MachineBasicBlock &MBB,
                                        MachineFunction &MF) {
   MachineInstrBuilder MIB(MF, &MI);
-  if (!Subtarget->isABI_O32()) { // N32, N64
+  if (!Subtarget->isABI_O32()) { // N32, N64, O64
     // Save current return address.
     BuildMI(MBB, &MI, MI.getDebugLoc(), TII->get(Mips::OR64))
         .addDef(Mips::AT_64)
         .addUse(Mips::RA_64, RegState::Undef)
         .addUse(Mips::ZERO_64);
-    // Stops instruction above from being removed later on.
+    // O64 is not one of the new ABIs, so as in O32 (and GCC), _mcount pops 2
+    // words, 8 bytes with o64's 32-bit pointers, from the stack.
+    if (Subtarget->isABI_O64())
+      BuildMI(MBB, &MI, MI.getDebugLoc(), TII->get(Mips::ADDiu))
+          .addDef(Mips::SP)
+          .addUse(Mips::SP)
+          .addImm(-8);
+    // Stops first instruction above from being removed later on.
     MIB.addUse(Mips::AT_64, RegState::Implicit);
   } else {  // O32
     // Save current return address.

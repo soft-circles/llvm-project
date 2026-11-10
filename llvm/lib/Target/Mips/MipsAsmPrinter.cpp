@@ -783,7 +783,6 @@ void MipsAsmPrinter::emitStartOfAsmFile(Module &M) {
     // 2. .nan 2008
     STI.isNaN2008() ? TS.emitDirectiveNaN2008() : TS.emitDirectiveNaNLegacy();
 
-
     TS.updateABIInfo(STI);
 
     // We should always emit a '.module fp=...' but binutils 2.24 does not

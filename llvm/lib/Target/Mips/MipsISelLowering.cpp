@@ -2656,7 +2656,10 @@ SDValue MipsTargetLowering::lowerFABS64(SDValue Op, SelectionDAG &DAG,
 }
 
 SDValue MipsTargetLowering::lowerFABS(SDValue Op, SelectionDAG &DAG) const {
-  if ((ABI.IsN32() || ABI.IsN64()) && (Op.getValueType() == MVT::f64))
+  // With 64-bit GPRs an f64 moves whole through dmfc1/dmtc1, as in
+  // lowerFCOPYSIGN. The 32-bit path splits it into FGR32 halves, which do not
+  // exist for the 64-bit FPU register file that o64 uses.
+  if (Subtarget.isGP64bit() && (Op.getValueType() == MVT::f64))
     return lowerFABS64(Op, DAG, Subtarget.hasExtractInsert());
 
   return lowerFABS32(Op, DAG, Subtarget.hasExtractInsert());
@@ -3207,9 +3210,8 @@ static bool CC_MipsO64(unsigned ValNo, MVT ValVT, MVT LocVT,
       State.getMachineFunction().getSubtarget());
   const bool BigEndian = !Subtarget.isLittle();
 
-  // byval is handled by CC_Mips_ByVal before we get here.
-  if (ArgFlags.isByVal())
-    return true;
+  assert(!ArgFlags.isByVal() &&
+         "byval arguments are handled by CC_Mips_ByVal before CC_MipsO64");
 
   const MVT OrigLocVT = LocVT;
   const bool IsNarrow = OrigLocVT.getStoreSize() < SlotSize;
@@ -4117,7 +4119,9 @@ MipsTargetLowering::CanLowerReturn(CallingConv::ID CallConv,
 
 bool MipsTargetLowering::shouldSignExtendTypeInLibCall(Type *Ty,
                                                        bool IsSigned) const {
-  if ((ABI.IsN32() || ABI.IsN64()) && Ty->isIntegerTy(32))
+  // The 64-bit ABIs (o64 included) keep 32-bit values sign-extended in their
+  // 64-bit registers, whatever the signedness of the type.
+  if (ABI.AreGprs64bit() && Ty->isIntegerTy(32))
     return true;
 
   return IsSigned;
@@ -4892,8 +4896,11 @@ void MipsTargetLowering::HandleByVal(CCState *State, unsigned &Size,
     unsigned RegSizeInBytes = Subtarget.getGPRSizeInBytes();
     ArrayRef<MCPhysReg> IntArgRegs = ABI.GetByValArgRegs();
     // FIXME: The O32 case actually describes no shadow registers.
+    // O64 follows O32: a by-value aggregate in an argument slot does not
+    // shadow an FPU register, so a later float still sees the slot taken by
+    // an integer and travels in a GPR.
     const MCPhysReg *ShadowRegs =
-        ABI.IsO32() ? IntArgRegs.data() : Mips64DPRegs;
+        (ABI.IsO32() || ABI.IsO64()) ? IntArgRegs.data() : Mips64DPRegs;
 
     // We used to check the size as well but we can't do that anymore since
     // CCState::HandleByVal() rounds up the size after calling this function.
