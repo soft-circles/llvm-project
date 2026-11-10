@@ -179,9 +179,6 @@ private:
   // Is alt macro mode enabled.
   bool AltMacroMode = false;
 
-  // Are we between .func and .endfunc?
-  bool InsideFunc = false;
-
 protected:
   virtual bool parseStatement(ParseStatementInfo &Info,
                               MCAsmParserSemaCallback *SI);
@@ -536,8 +533,6 @@ private:
     DK_LTO_SET_CONDITIONAL,
     DK_CFI_MTE_TAGGED_FRAME,
     DK_MEMTAG,
-    DK_FUNC,
-    DK_ENDFUNC,
     DK_END
   };
 
@@ -692,10 +687,6 @@ private:
 
   // "end"
   bool parseDirectiveEnd(SMLoc DirectiveLoc);
-
-  // ".func" or ".endfunc"
-  bool parseDirectiveFunc(SMLoc DirectiveLoc);
-  bool parseDirectiveEndFunc(SMLoc DirectiveLoc);
 
   // ".err" or ".error"
   bool parseDirectiveError(SMLoc DirectiveLoc, bool WithMessage);
@@ -2183,10 +2174,6 @@ bool AsmParser::parseStatement(ParseStatementInfo &Info,
       return parseDirectivePurgeMacro(IDLoc);
     case DK_END:
       return parseDirectiveEnd(IDLoc);
-    case DK_FUNC:
-      return parseDirectiveFunc(IDLoc);
-    case DK_ENDFUNC:
-      return parseDirectiveEndFunc(IDLoc);
     case DK_ERR:
       return parseDirectiveError(IDLoc, false);
     case DK_ERROR:
@@ -5371,38 +5358,6 @@ bool AsmParser::parseDirectiveEnd(SMLoc DirectiveLoc) {
   return false;
 }
 
-/// parseDirectiveFunc
-/// ::= .func [name [, label]]
-/// GAS emits debug information for these only with --gstabs, so they are
-/// otherwise accepted and ignored.
-bool AsmParser::parseDirectiveFunc(SMLoc DirectiveLoc) {
-  StringRef Name, Label;
-  if (Lexer.isNot(AsmToken::EndOfStatement)) {
-    if (check(parseIdentifier(Name), "expected identifier"))
-      return true;
-    if (parseOptionalToken(AsmToken::Comma) &&
-        check(parseIdentifier(Label), "expected identifier"))
-      return true;
-  }
-  if (parseEOL())
-    return true;
-  if (InsideFunc)
-    return Error(DirectiveLoc, ".endfunc missing for previous .func");
-  InsideFunc = true;
-  return false;
-}
-
-/// parseDirectiveEndFunc
-/// ::= .endfunc
-bool AsmParser::parseDirectiveEndFunc(SMLoc DirectiveLoc) {
-  if (parseEOL())
-    return true;
-  if (!InsideFunc)
-    return Error(DirectiveLoc, "missing .func");
-  InsideFunc = false;
-  return false;
-}
-
 /// parseDirectiveError
 ///   ::= .err
 ///   ::= .error [string]
@@ -5555,8 +5510,6 @@ void AsmParser::initializeDirectiveKindMap() {
   DirectiveKindMap[".elseif"] = DK_ELSEIF;
   DirectiveKindMap[".else"] = DK_ELSE;
   DirectiveKindMap[".end"] = DK_END;
-  DirectiveKindMap[".func"] = DK_FUNC;
-  DirectiveKindMap[".endfunc"] = DK_ENDFUNC;
   DirectiveKindMap[".endif"] = DK_ENDIF;
   DirectiveKindMap[".skip"] = DK_SKIP;
   DirectiveKindMap[".space"] = DK_SPACE;

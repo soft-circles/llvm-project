@@ -167,14 +167,17 @@ class MipsAsmParser : public MCTargetAsmParser {
   StringMap<RegisterSetAlias> RegisterSets;
 
   // Whether ".align 0" turned off the automatic alignment of .half, .word,
-  // .dword and similar data. As in GAS, a section directive or a nonzero
-  // .align turns it back on.
+  // .dword, .octa and similar data. As in GAS, a section directive or a
+  // nonzero .align turns it back on.
   bool AutoAlignOff = false;
 
   // The labels parsed since the last section directive that may still be at
   // the current position, which the automatic alignment moves past its
   // padding.
   SmallVector<MCSymbol *, 4> AutoAlignLabels;
+
+  // Are we between .func and .endfunc?
+  bool InsideFunc = false;
 
   // Print a warning along with its fix-it message at the given range.
   void printWarningWithFixIt(const Twine &Msg, const Twine &FixMsg,
@@ -380,6 +383,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetArchDirective();
   bool parseSetFeature(uint64_t Feature);
   bool isPicAndNotNxxAbi(); // Used by .cpload, .cprestore, and .cpsetup.
+  bool parseDirectiveFunc(SMLoc DirectiveLoc);
+  bool parseDirectiveEndFunc(SMLoc DirectiveLoc);
   bool parseDirectiveCpAdd(SMLoc Loc);
   bool parseDirectiveCpLoad(SMLoc Loc);
   bool parseDirectiveCpLocal(SMLoc Loc);
@@ -7810,6 +7815,39 @@ bool MipsAsmParser::isPicAndNotNxxAbi() {
   return inPicMode() && !(isABI_N32() || isABI_N64());
 }
 
+/// parseDirectiveFunc
+/// ::= .func [name [, label]]
+/// GAS emits debug information for these only with --gstabs, so they are
+/// otherwise accepted and ignored.
+bool MipsAsmParser::parseDirectiveFunc(SMLoc DirectiveLoc) {
+  MCAsmParser &Parser = getParser();
+  StringRef Name, Label;
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    if (check(Parser.parseIdentifier(Name), "expected identifier"))
+      return true;
+    if (parseOptionalToken(AsmToken::Comma) &&
+        check(Parser.parseIdentifier(Label), "expected identifier"))
+      return true;
+  }
+  if (parseEOL())
+    return true;
+  if (InsideFunc)
+    return Error(DirectiveLoc, ".endfunc missing for previous .func");
+  InsideFunc = true;
+  return false;
+}
+
+/// parseDirectiveEndFunc
+/// ::= .endfunc
+bool MipsAsmParser::parseDirectiveEndFunc(SMLoc DirectiveLoc) {
+  if (parseEOL())
+    return true;
+  if (!InsideFunc)
+    return Error(DirectiveLoc, "missing .func");
+  InsideFunc = false;
+  return false;
+}
+
 bool MipsAsmParser::parseDirectiveCpAdd(SMLoc Loc) {
   SmallVector<std::unique_ptr<MCParsedAsmOperand>, 1> Reg;
   ParseStatus Res = parseAnyRegister(Reg);
@@ -8722,6 +8760,7 @@ void MipsAsmParser::autoAlignData(StringRef IDVal) {
                       .Cases(".word", ".int", ".long", 4)
                       .Cases(".float", ".single", ".gpword", 4)
                       .Cases(".dword", ".quad", ".double", ".gpdword", 8)
+                      .Case(".octa", 16)
                       .Default(0);
   if (!Size || AutoAlignOff || !getStreamer().getCurrentSectionOnly())
     return;
@@ -8800,6 +8839,14 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   autoAlignData(IDVal);
   if (IDVal.equals_insensitive(".align")) {
     parseDirectiveAlign();
+    return false;
+  }
+  if (IDVal.equals_insensitive(".func")) {
+    parseDirectiveFunc(DirectiveID.getLoc());
+    return false;
+  }
+  if (IDVal.equals_insensitive(".endfunc")) {
+    parseDirectiveEndFunc(DirectiveID.getLoc());
     return false;
   }
 
