@@ -224,8 +224,8 @@ void MipsTargetInfo::getTargetDefines(const LangOptions &Opts,
   // 32-bit MIPS processors don't have the necessary lld/scd instructions
   // found in 64-bit processors. In the case of O32 on a 64-bit processor,
   // the instructions exist but using them violates the ABI since they
-  // require 64-bit GPRs and O32 only supports 32-bit GPRs.
-  if (ABI == "n32" || ABI == "n64")
+  // require 64-bit GPRs and O32 only supports 32-bit GPRs. O64 has 64-bit GPRs.
+  if (ABI == "n32" || ABI == "n64" || ABI == "o64")
     Builder.defineMacro("__GCC_HAVE_SYNC_COMPARE_AND_SWAP_8");
 }
 
@@ -255,8 +255,16 @@ unsigned MipsTargetInfo::getUnwindWordWidth() const {
 
 bool MipsTargetInfo::validateTarget(DiagnosticsEngine &Diags) const {
   // microMIPS64R6 backend was removed.
-  if (getTriple().isMIPS64() && IsMicromips && (ABI == "n32" || ABI == "n64")) {
+  if (getTriple().isMIPS64() && IsMicromips &&
+      (ABI == "n32" || ABI == "n64" || ABI == "o64")) {
     Diags.Report(diag::err_target_unsupported_cpu_for_micromips) << CPU;
+    return false;
+  }
+
+  // o64 needs a 64-bit triple; the driver selects one for -mabi=o64.
+  if (getTriple().isMIPS32() && ABI == "o64") {
+    Diags.Report(diag::err_target_unsupported_abi_for_triple)
+        << ABI << getTriple().str();
     return false;
   }
 
@@ -268,14 +276,14 @@ bool MipsTargetInfo::validateTarget(DiagnosticsEngine &Diags) const {
   }
 
   // -fpxx is valid only for the o32 ABI
-  if (FPMode == FPXX && (ABI == "n32" || ABI == "n64")) {
+  if (FPMode == FPXX && (ABI == "n32" || ABI == "n64" || ABI == "o64")) {
     Diags.Report(diag::err_unsupported_abi_for_opt) << "-mfpxx" << "o32";
     return false;
   }
 
-  // -mfp32 and n32/n64 ABIs are incompatible
+  // -mfp32 and n32/n64/o64 ABIs are incompatible
   if (FPMode != FP64 && FPMode != FPXX && !IsSingleFloat &&
-      (ABI == "n32" || ABI == "n64")) {
+      (ABI == "n32" || ABI == "n64" || ABI == "o64")) {
     Diags.Report(diag::err_opt_not_valid_with_opt) << "-mfpxx" << CPU;
     return false;
   }
