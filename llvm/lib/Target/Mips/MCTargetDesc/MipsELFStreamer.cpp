@@ -92,6 +92,7 @@ void MipsELFStreamer::emitLabel(MCSymbol *Symbol, SMLoc Loc) {
 
 void MipsELFStreamer::switchSection(MCSection *Section, uint32_t Subsection) {
   MCELFStreamer::switchSection(Section, Subsection);
+  Subsections.insert({Section, Subsection});
   Labels.clear();
 }
 

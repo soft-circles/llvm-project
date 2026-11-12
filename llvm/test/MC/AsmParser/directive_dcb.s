@@ -42,6 +42,24 @@ TEST5:
 TEST6:
         .dcb.d 5, .232
 
+# As in GNU as, a .dcb without a value fills with zero.
+# CHECK: TEST7:
+# CHECK-NEXT: .byte 0
+# CHECK-NEXT: .byte 0
+# CHECK-NEXT: .short 0
+# CHECK-NEXT: .long 0
+# CHECK-NEXT: .long 0
+# CHECK-NEXT: .long 0
+# CHECK-NEXT: .quad 0
+# CHECK-NEXT: TEST8:
+TEST7:
+        .dcb.b 2
+        .dcb 1
+        .dcb.l 2 # a comment
+        .dcb.s 1
+        .dcb.d 1
+TEST8:
+
 .ifdef ERR
 # ERR: :[[#@LINE+1]]:8: error: .dcb.x not currently supported for this target
 .dcb.x 3, 1.2e3
