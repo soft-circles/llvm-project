@@ -4042,14 +4042,20 @@ bool MipsAsmParser::expandCondBranchImm(MCInst &Inst, SMLoc IDLoc,
 
   warnIfNoMacro(IDLoc);
 
+  // As in GNU as, a branch that is always taken is a plain b, likely or not,
+  // since a taken branch runs its delay slot either way. A likely branch that
+  // is never taken must still annul its delay slot, so it is bnel $0, $0
+  // rather than a nop.
   auto EmitAlways = [&]() {
-    TOut.emitRRX(IsLikely ? Mips::BEQL : Mips::BEQ, Mips::ZERO, Mips::ZERO,
-                 Offset, IDLoc, STI);
+    TOut.emitRRX(Mips::BEQ, Mips::ZERO, Mips::ZERO, Offset, IDLoc, STI);
     Warning(IDLoc, "branch is always taken");
     return false;
   };
   auto EmitNever = [&]() {
-    TOut.emitNop(IDLoc, STI);
+    if (IsLikely)
+      TOut.emitRRX(Mips::BNEL, Mips::ZERO, Mips::ZERO, Offset, IDLoc, STI);
+    else
+      TOut.emitNop(IDLoc, STI);
     return false;
   };
 
@@ -4910,7 +4916,19 @@ bool MipsAsmParser::expandAliasImmediate(MCInst &Inst, SMLoc IDLoc,
 
   unsigned FinalOpcode = Inst.getOpcode();
 
-  // GNU as always builds the immediate in $at, even when the destination
+  // GNU as builds nor of an unsigned 16-bit immediate as ori then nor with
+  // $zero, without $at.
+  if ((FinalOpcode == Mips::NORImm || FinalOpcode == Mips::NORImm64) &&
+      isUInt<16>(ImmValue)) {
+    bool Is64 = FinalOpcode == Mips::NORImm64;
+    TOut.emitRRI(Is64 ? Mips::ORi64 : Mips::ORi, DstReg, SrcReg, ImmValue,
+                 IDLoc, STI);
+    TOut.emitRRR(Is64 ? Mips::NOR64 : Mips::NOR, DstReg, DstReg,
+                 Is64 ? Mips::ZERO_64 : Mips::ZERO, IDLoc, STI);
+    return false;
+  }
+
+  // GNU as otherwise builds the immediate in $at, even when the destination
   // differs from the source and could hold it.
   MCRegister ATReg = getATReg(Inst.getLoc());
   if (!ATReg)

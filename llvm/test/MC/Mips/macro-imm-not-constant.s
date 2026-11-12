@@ -34,8 +34,8 @@ e:
 # FOLD-NEXT: ddiv $zero, $3, $1
 # FOLD-NEXT: mflo $3
 	ddiv $3, e - s
-# FOLD-NEXT: addiu $1, $zero, 0x8
-# FOLD-NEXT: nor $3, $3, $1
+# FOLD-NEXT: ori $3, $3, 0x8
+# FOLD-NEXT: not $3, $3
 	nor $3, $3, e - s
 # FOLD-NEXT: xori $3, $3, 0x8
 # FOLD-NEXT: sltiu $3, $3, 0x1

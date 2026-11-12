@@ -339,25 +339,25 @@ text_label:
 # MICROMIPS-NEXT:                     # <MCInst #{{[0-9]+}} AND_MM
 
   nor $4, $5, 0
-# MIPS: addiu $1, $zero, 0            # encoding: [0x00,0x00,0x01,0x24]
-# MIPS: nor   $4, $5, $1              # encoding: [0x27,0x20,0xa1,0x00]
+# MIPS: ori $4, $5, 0                 # encoding: [0x00,0x00,0xa4,0x34]
+# MIPS: not $4, $4                    # encoding: [0x27,0x20,0x80,0x00]
 # MIPS-NEXT:                          # <MCInst #{{[0-9]+}} NOR
-# MICROMIPS: addiu $1, $zero, 0       # encoding: [0x20,0x30,0x00,0x00]
-# MICROMIPS: nor $4, $5, $1           # encoding: [0x25,0x00,0xd0,0x22]
+# MICROMIPS: ori $4, $5, 0            # encoding: [0x85,0x50,0x00,0x00]
+# MICROMIPS: not $4, $4               # encoding: [0x04,0x00,0xd0,0x22]
 # MICROMIPS-NEXT:                     # <MCInst #{{[0-9]+}} NOR
   nor $4, $5, 1
-# MIPS: addiu $1, $zero, 1            # encoding: [0x01,0x00,0x01,0x24]
-# MIPS: nor   $4, $5, $1              # encoding: [0x27,0x20,0xa1,0x00]
+# MIPS: ori $4, $5, 1                 # encoding: [0x01,0x00,0xa4,0x34]
+# MIPS: not $4, $4                    # encoding: [0x27,0x20,0x80,0x00]
 # MIPS-NEXT:                          # <MCInst #{{[0-9]+}} NOR
-# MICROMIPS: addiu $1, $zero, 1       # encoding: [0x20,0x30,0x01,0x00]
-# MICROMIPS: nor $4, $5, $1           # encoding: [0x25,0x00,0xd0,0x22]
+# MICROMIPS: ori $4, $5, 1            # encoding: [0x85,0x50,0x01,0x00]
+# MICROMIPS: not $4, $4               # encoding: [0x04,0x00,0xd0,0x22]
 # MICROMIPS-NEXT:                     # <MCInst #{{[0-9]+}} NOR
   nor $4, $5, 0x8000
-# MIPS: ori   $1, $zero, 32768        # encoding: [0x00,0x80,0x01,0x34]
-# MIPS: nor   $4, $5, $1              # encoding: [0x27,0x20,0xa1,0x00]
+# MIPS: ori $4, $5, 32768             # encoding: [0x00,0x80,0xa4,0x34]
+# MIPS: not $4, $4                    # encoding: [0x27,0x20,0x80,0x00]
 # MIPS-NEXT:                          # <MCInst #{{[0-9]+}} NOR
-# MICROMIPS: ori $1, $zero, 32768     # encoding: [0x20,0x50,0x00,0x80]
-# MICROMIPS: nor $4, $5, $1           # encoding: [0x25,0x00,0xd0,0x22]
+# MICROMIPS: ori $4, $5, 32768        # encoding: [0x85,0x50,0x00,0x80]
+# MICROMIPS: not $4, $4               # encoding: [0x04,0x00,0xd0,0x22]
 # MICROMIPS-NEXT:                     # <MCInst #{{[0-9]+}} NOR
   nor $4, $5, -0x8000
 # MIPS: addiu $1, $zero, -32768       # encoding: [0x00,0x80,0x01,0x24]
@@ -393,25 +393,25 @@ text_label:
 # MICROMIPS-NEXT:                     # <MCInst #{{[0-9]+}} NOR
 
   nor $4, 0
-# MIPS: addiu $1, $zero, 0            # encoding: [0x00,0x00,0x01,0x24]
-# MIPS: nor   $4, $4, $1              # encoding: [0x27,0x20,0x81,0x00]
+# MIPS: ori $4, $4, 0                 # encoding: [0x00,0x00,0x84,0x34]
+# MIPS: not $4, $4                    # encoding: [0x27,0x20,0x80,0x00]
 # MIPS-NEXT:                          # <MCInst #{{[0-9]+}} NOR
-# MICROMIPS: addiu $1, $zero, 0       # encoding: [0x20,0x30,0x00,0x00]
-# MICROMIPS: nor $4, $4, $1           # encoding: [0x24,0x00,0xd0,0x22]
+# MICROMIPS: ori $4, $4, 0            # encoding: [0x84,0x50,0x00,0x00]
+# MICROMIPS: not $4, $4               # encoding: [0x04,0x00,0xd0,0x22]
 # MICROMIPS-NEXT:                     # <MCInst #{{[0-9]+}} NOR
   nor $4, 1
-# MIPS: addiu $1, $zero, 1            # encoding: [0x01,0x00,0x01,0x24]
-# MIPS: nor   $4, $4, $1              # encoding: [0x27,0x20,0x81,0x00]
+# MIPS: ori $4, $4, 1                 # encoding: [0x01,0x00,0x84,0x34]
+# MIPS: not $4, $4                    # encoding: [0x27,0x20,0x80,0x00]
 # MIPS-NEXT:                          # <MCInst #{{[0-9]+}} NOR
-# MICROMIPS: addiu $1, $zero, 1       # encoding: [0x20,0x30,0x01,0x00]
-# MICROMIPS: nor $4, $4, $1           # encoding: [0x24,0x00,0xd0,0x22]
+# MICROMIPS: ori $4, $4, 1            # encoding: [0x84,0x50,0x01,0x00]
+# MICROMIPS: not $4, $4               # encoding: [0x04,0x00,0xd0,0x22]
 # MICROMIPS-NEXT:                     # <MCInst #{{[0-9]+}} NOR
   nor $4, 0x8000
-# MIPS: ori   $1, $zero, 32768        # encoding: [0x00,0x80,0x01,0x34]
-# MIPS: nor   $4, $4, $1              # encoding: [0x27,0x20,0x81,0x00]
+# MIPS: ori $4, $4, 32768             # encoding: [0x00,0x80,0x84,0x34]
+# MIPS: not $4, $4                    # encoding: [0x27,0x20,0x80,0x00]
 # MIPS-NEXT:                          # <MCInst #{{[0-9]+}} NOR
-# MICROMIPS: ori $1, $zero, 32768     # encoding: [0x20,0x50,0x00,0x80]
-# MICROMIPS: nor $4, $4, $1           # encoding: [0x24,0x00,0xd0,0x22]
+# MICROMIPS: ori $4, $4, 32768        # encoding: [0x84,0x50,0x00,0x80]
+# MICROMIPS: not $4, $4               # encoding: [0x04,0x00,0xd0,0x22]
 # MICROMIPS-NEXT:                     # <MCInst #{{[0-9]+}} NOR
   nor $4, -0x8000
 # MIPS: addiu $1, $zero, -32768       # encoding: [0x00,0x80,0x01,0x24]
