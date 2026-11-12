@@ -17,6 +17,7 @@
 #include "MipsELFStreamer.h"
 #include "MipsInstPrinter.h"
 #include "MipsMCTargetDesc.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/BinaryFormat/ELF.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
@@ -37,6 +38,11 @@ namespace {
 static cl::opt<bool> RoundSectionSizes(
     "mips-round-section-sizes", cl::init(false),
     cl::desc("Round section sizes up to the section alignment"), cl::Hidden);
+
+static cl::opt<bool> PadCodeSections(
+    "mips-pad-code-sections", cl::init(false),
+    cl::desc("Pad code sections to their alignment, as GNU as does"),
+    cl::Hidden);
 } // end anonymous namespace
 
 static bool isMicroMips(const MCSubtargetInfo *STI) {
@@ -1008,9 +1014,30 @@ void MipsTargetELFStreamer::finish() {
   MCSection &BSSSection = *OFI.getBSSSection();
   S.switchSection(&BSSSection);
 
+  // GNU as gives .text the alignment of its code, at least 4, rather than 16.
+  Align CodeTextAlign = std::max(TextSection.getAlign(), Align(4));
+
   TextSection.ensureMinAlignment(Align(16));
   DataSection.ensureMinAlignment(Align(16));
   BSSSection.ensureMinAlignment(Align(16));
+
+  if (PadCodeSections) {
+    // GNU as pads the end of each code section, and only of code sections, to
+    // the alignment the code in it asked for. The end is the last subsection.
+    MapVector<MCSection *, uint32_t> LastSubsection;
+    for (auto [Sec, Subsection] :
+         static_cast<MipsELFStreamer &>(S).subsections()) {
+      if (!(static_cast<MCSectionELF *>(Sec)->getFlags() & ELF::SHF_EXECINSTR))
+        continue;
+      uint32_t &Last = LastSubsection[Sec];
+      Last = std::max(Last, Subsection);
+    }
+    for (auto [Sec, Subsection] : LastSubsection) {
+      Align Alignment = Sec == &TextSection ? CodeTextAlign : Sec->getAlign();
+      S.switchSection(Sec, Subsection);
+      S.emitCodeAlignment(Alignment, &STI, Alignment.value());
+    }
+  }
 
   if (RoundSectionSizes) {
     // Make sections sizes a multiple of the alignment. This is useful for

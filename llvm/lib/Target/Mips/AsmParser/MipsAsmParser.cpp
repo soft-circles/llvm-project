@@ -294,6 +294,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandBranchImm(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                        const MCSubtargetInfo *STI);
 
+  bool expandCondBranchImm(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
+                           const MCSubtargetInfo *STI);
+
   bool expandCondBranches(MCInst &Inst, SMLoc IDLoc, MCStreamer &Out,
                           const MCSubtargetInfo *STI);
 
@@ -2987,6 +2990,16 @@ bool MipsAsmParser::expandLoadAddress(MCRegister DstReg, MCRegister BaseReg,
     return true;
   }
 
+  // Like GNU as, an address under an explicit relocation operator such as
+  // %lo(sym) is the 16-bit immediate of one addiu.
+  if (Offset.isExpr() && isa<MCSpecifierExpr>(Offset.getExpr())) {
+    warnIfNoMacro(IDLoc);
+    getTargetStreamer().emitRRX(
+        Is32BitAddress ? Mips::ADDiu : Mips::DADDiu, DstReg,
+        BaseReg ? BaseReg : MCRegister(ABI.GetZeroReg()), Offset, IDLoc, STI);
+    return false;
+  }
+
   if (!Offset.isImm())
     return loadAndAddSymbolAddress(Offset.getExpr(), DstReg, BaseReg,
                                    Is32BitAddress, IDLoc, Out, STI);
@@ -3977,87 +3990,132 @@ bool MipsAsmParser::expandLoadStoreMultiple(MCInst &Inst, SMLoc IDLoc,
   return false;
 }
 
+// Expand a branch that compares a register with an immediate the way GNU as
+// does. ble/bgt (and their unsigned and likely forms) become blt/bge of the
+// immediate plus one. blt/bge of 0 or 1 compare the register with zero, and
+// any other immediate sets $at with slti/sltiu, or with slt/sltu of the
+// immediate loaded into $at when it doesn't fit 16 bits.
+bool MipsAsmParser::expandCondBranchImm(MCInst &Inst, SMLoc IDLoc,
+                                        MCStreamer &Out,
+                                        const MCSubtargetInfo *STI) {
+  MipsTargetStreamer &TOut = getTargetStreamer();
+  MCRegister SrcReg = Inst.getOperand(0).getReg();
+  MCOperand Offset = MCOperand::createExpr(Inst.getOperand(2).getExpr());
+  bool Is32BitImm = !isGP64bit();
+  auto Wrap = [Is32BitImm](uint64_t Value) -> int64_t {
+    return Is32BitImm ? SignExtend64<32>(Value) : static_cast<int64_t>(Value);
+  };
+  int64_t Imm = Wrap(Inst.getOperand(1).getImm());
+  int64_t SignedMax = Is32BitImm ? INT32_MAX : INT64_MAX;
+  int64_t SignedMin = Is32BitImm ? INT32_MIN : INT64_MIN;
+
+  struct ImmBranch {
+    unsigned Opcode;
+    bool IsLessThan, IsUnsigned, IsLikely, AddOne;
+  };
+  static const ImmBranch ImmBranches[] = {
+      {Mips::BLTImmMacro, true, false, false, false},
+      {Mips::BLEImmMacro, true, false, false, true},
+      {Mips::BGEImmMacro, false, false, false, false},
+      {Mips::BGTImmMacro, false, false, false, true},
+      {Mips::BLTUImmMacro, true, true, false, false},
+      {Mips::BLEUImmMacro, true, true, false, true},
+      {Mips::BGEUImmMacro, false, true, false, false},
+      {Mips::BGTUImmMacro, false, true, false, true},
+      {Mips::BLTLImmMacro, true, false, true, false},
+      {Mips::BLELImmMacro, true, false, true, true},
+      {Mips::BGELImmMacro, false, false, true, false},
+      {Mips::BGTLImmMacro, false, false, true, true},
+      {Mips::BLTULImmMacro, true, true, true, false},
+      {Mips::BLEULImmMacro, true, true, true, true},
+      {Mips::BGEULImmMacro, false, true, true, false},
+      {Mips::BGTULImmMacro, false, true, true, true},
+  };
+  const ImmBranch *Found =
+      llvm::find_if(ImmBranches, [&](const ImmBranch &Entry) {
+        return Entry.Opcode == Inst.getOpcode();
+      });
+  assert(Found != std::end(ImmBranches) &&
+         "unknown opcode for branch pseudo-instruction");
+  bool IsLessThan = Found->IsLessThan, IsUnsigned = Found->IsUnsigned,
+       IsLikely = Found->IsLikely;
+
+  warnIfNoMacro(IDLoc);
+
+  auto EmitAlways = [&]() {
+    TOut.emitRRX(IsLikely ? Mips::BEQL : Mips::BEQ, Mips::ZERO, Mips::ZERO,
+                 Offset, IDLoc, STI);
+    Warning(IDLoc, "branch is always taken");
+    return false;
+  };
+  auto EmitNever = [&]() {
+    TOut.emitNop(IDLoc, STI);
+    return false;
+  };
+
+  if (Found->AddOne) {
+    int64_t Last = IsUnsigned ? -1 : SignedMax;
+    if (Imm == Last)
+      return IsLessThan ? EmitAlways() : EmitNever();
+    Imm = Wrap(static_cast<uint64_t>(Imm) + 1);
+  }
+
+  if (IsUnsigned) {
+    if (Imm == 0)
+      return IsLessThan ? EmitNever() : EmitAlways();
+    if (Imm == 1) {
+      unsigned Opcode = IsLessThan ? (IsLikely ? Mips::BEQL : Mips::BEQ)
+                                   : (IsLikely ? Mips::BNEL : Mips::BNE);
+      TOut.emitRRX(Opcode, SrcReg, Mips::ZERO, Offset, IDLoc, STI);
+      return false;
+    }
+  } else {
+    if (Imm == 0 || Imm == 1) {
+      static const unsigned ZeroCompare[2][2][2] = {
+          {{Mips::BGEZ, Mips::BGTZ}, {Mips::BGEZL, Mips::BGTZL}},
+          {{Mips::BLTZ, Mips::BLEZ}, {Mips::BLTZL, Mips::BLEZL}}};
+      TOut.emitRX(ZeroCompare[IsLessThan][IsLikely][Imm], SrcReg, Offset, IDLoc,
+                  STI);
+      return false;
+    }
+    if (!IsLessThan && Imm == SignedMin)
+      return EmitAlways();
+  }
+
+  MCRegister ATReg = getATReg(IDLoc);
+  if (!ATReg)
+    return true;
+  if (isInt<16>(Imm)) {
+    TOut.emitRRI(IsUnsigned ? Mips::SLTiu : Mips::SLTi, ATReg, SrcReg, Imm,
+                 IDLoc, STI);
+  } else {
+    if (loadImmediate(Imm, ATReg, MCRegister(), Is32BitImm, false, IDLoc, Out,
+                      STI))
+      return true;
+    TOut.emitRRR(IsUnsigned ? Mips::SLTu : Mips::SLT, ATReg, SrcReg, ATReg,
+                 IDLoc, STI);
+  }
+  unsigned Branch = IsLessThan ? (IsLikely ? Mips::BNEL : Mips::BNE)
+                               : (IsLikely ? Mips::BEQL : Mips::BEQ);
+  TOut.emitRRX(Branch, ATReg, Mips::ZERO, Offset, IDLoc, STI);
+  return false;
+}
+
 bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
                                        MCStreamer &Out,
                                        const MCSubtargetInfo *STI) {
+  if (Inst.getOperand(1).isImm())
+    return expandCondBranchImm(Inst, IDLoc, Out, STI);
+
   MipsTargetStreamer &TOut = getTargetStreamer();
-  bool EmittedNoMacroWarning = false;
   unsigned PseudoOpcode = Inst.getOpcode();
   MCRegister SrcReg = Inst.getOperand(0).getReg();
-  const MCOperand &TrgOp = Inst.getOperand(1);
   const MCExpr *OffsetExpr = Inst.getOperand(2).getExpr();
 
   unsigned ZeroSrcOpcode, ZeroTrgOpcode;
   bool ReverseOrderSLT, IsUnsigned, IsLikely, AcceptsEquality;
 
-  MCRegister TrgReg;
-  if (TrgOp.isReg())
-    TrgReg = TrgOp.getReg();
-  else if (TrgOp.isImm()) {
-    warnIfNoMacro(IDLoc);
-    EmittedNoMacroWarning = true;
-
-    TrgReg = getATReg(IDLoc);
-    if (!TrgReg)
-      return true;
-
-    switch(PseudoOpcode) {
-    default:
-      llvm_unreachable("unknown opcode for branch pseudo-instruction");
-    case Mips::BLTImmMacro:
-      PseudoOpcode = Mips::BLT;
-      break;
-    case Mips::BLEImmMacro:
-      PseudoOpcode = Mips::BLE;
-      break;
-    case Mips::BGEImmMacro:
-      PseudoOpcode = Mips::BGE;
-      break;
-    case Mips::BGTImmMacro:
-      PseudoOpcode = Mips::BGT;
-      break;
-    case Mips::BLTUImmMacro:
-      PseudoOpcode = Mips::BLTU;
-      break;
-    case Mips::BLEUImmMacro:
-      PseudoOpcode = Mips::BLEU;
-      break;
-    case Mips::BGEUImmMacro:
-      PseudoOpcode = Mips::BGEU;
-      break;
-    case Mips::BGTUImmMacro:
-      PseudoOpcode = Mips::BGTU;
-      break;
-    case Mips::BLTLImmMacro:
-      PseudoOpcode = Mips::BLTL;
-      break;
-    case Mips::BLELImmMacro:
-      PseudoOpcode = Mips::BLEL;
-      break;
-    case Mips::BGELImmMacro:
-      PseudoOpcode = Mips::BGEL;
-      break;
-    case Mips::BGTLImmMacro:
-      PseudoOpcode = Mips::BGTL;
-      break;
-    case Mips::BLTULImmMacro:
-      PseudoOpcode = Mips::BLTUL;
-      break;
-    case Mips::BLEULImmMacro:
-      PseudoOpcode = Mips::BLEUL;
-      break;
-    case Mips::BGEULImmMacro:
-      PseudoOpcode = Mips::BGEUL;
-      break;
-    case Mips::BGTULImmMacro:
-      PseudoOpcode = Mips::BGTUL;
-      break;
-    }
-
-    if (loadImmediate(TrgOp.getImm(), TrgReg, MCRegister(), !isGP64bit(), false,
-                      IDLoc, Out, STI))
-      return true;
-  }
+  MCRegister TrgReg = Inst.getOperand(1).getReg();
 
   switch (PseudoOpcode) {
   case Mips::BLT:
@@ -4211,8 +4269,7 @@ bool MipsAsmParser::expandCondBranches(MCInst &Inst, SMLoc IDLoc,
   if (!ATRegNum)
     return true;
 
-  if (!EmittedNoMacroWarning)
-    warnIfNoMacro(IDLoc);
+  warnIfNoMacro(IDLoc);
 
   // SLT fits well with 2 of our 4 pseudo-branches:
   //   BLT, where $rs < $rt, translates into "slt $at, $rs, $rt" and
@@ -4845,8 +4902,6 @@ bool MipsAsmParser::expandAliasImmediate(MCInst &Inst, SMLoc IDLoc,
          Inst.getOperand(1).isReg() &&
          Inst.getOperand(2).isImm() && "Invalid instruction operand.");
 
-  MCRegister ATReg;
-  MCRegister FinalDstReg;
   MCRegister DstReg = Inst.getOperand(0).getReg();
   MCRegister SrcReg = Inst.getOperand(1).getReg();
   int64_t ImmValue = Inst.getOperand(2).getImm();
@@ -4855,15 +4910,13 @@ bool MipsAsmParser::expandAliasImmediate(MCInst &Inst, SMLoc IDLoc,
 
   unsigned FinalOpcode = Inst.getOpcode();
 
-  if (DstReg == SrcReg) {
-    ATReg = getATReg(Inst.getLoc());
-    if (!ATReg)
-      return true;
-    FinalDstReg = DstReg;
-    DstReg = ATReg;
-  }
+  // GNU as always builds the immediate in $at, even when the destination
+  // differs from the source and could hold it.
+  MCRegister ATReg = getATReg(Inst.getLoc());
+  if (!ATReg)
+    return true;
 
-  if (!loadImmediate(ImmValue, DstReg, MCRegister(), Is32Bit, false,
+  if (!loadImmediate(ImmValue, ATReg, MCRegister(), Is32Bit, false,
                      Inst.getLoc(), Out, STI)) {
     switch (FinalOpcode) {
     default:
@@ -4933,10 +4986,7 @@ bool MipsAsmParser::expandAliasImmediate(MCInst &Inst, SMLoc IDLoc,
       break;
     }
 
-    if (!FinalDstReg)
-      TOut.emitRRR(FinalOpcode, DstReg, DstReg, SrcReg, IDLoc, STI);
-    else
-      TOut.emitRRR(FinalOpcode, FinalDstReg, FinalDstReg, DstReg, IDLoc, STI);
+    TOut.emitRRR(FinalOpcode, DstReg, SrcReg, ATReg, IDLoc, STI);
     return false;
   }
   return true;
@@ -9020,6 +9070,17 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   if (IDVal == ".set") {
     parseDirectiveSet();
     return false;
+  }
+
+  // GNU as accepts ".equ name, $N" as a register alias, as ".set" is.
+  if (IDVal == ".equ" && getLexer().is(AsmToken::Identifier)) {
+    AsmToken Next[3];
+    getLexer().peekTokens(Next);
+    if (Next[0].is(AsmToken::Comma) && Next[1].is(AsmToken::Dollar) &&
+        Next[2].is(AsmToken::Integer)) {
+      parseSetAssignment();
+      return false;
+    }
   }
 
   if (IDVal == ".mask" || IDVal == ".fmask") {

@@ -4851,7 +4851,7 @@ bool AsmParser::parseDirectiveSpace(StringRef IDVal) {
 }
 
 /// parseDirectiveDCB
-/// ::= .dcb.{b, l, w} expression, expression
+/// ::= .dcb.{b, l, w} expression [, expression]
 bool AsmParser::parseDirectiveDCB(StringRef IDVal, unsigned Size) {
   SMLoc NumValuesLoc = Lexer.getLoc();
   int64_t NumValues;
@@ -4861,6 +4861,13 @@ bool AsmParser::parseDirectiveDCB(StringRef IDVal, unsigned Size) {
   if (NumValues < 0) {
     Warning(NumValuesLoc, "'" + Twine(IDVal) + "' directive with negative repeat count has no effect");
     return false;
+  }
+
+  // As in GNU as, the value is optional and defaults to zero.
+  if (getLexer().is(AsmToken::EndOfStatement)) {
+    for (uint64_t i = 0, e = NumValues; i != e; ++i)
+      getStreamer().emitIntValue(0, Size);
+    return parseEOL();
   }
 
   if (parseComma())
@@ -4888,7 +4895,7 @@ bool AsmParser::parseDirectiveDCB(StringRef IDVal, unsigned Size) {
 }
 
 /// parseDirectiveRealDCB
-/// ::= .dcb.{d, s} expression, expression
+/// ::= .dcb.{d, s} expression [, expression]
 bool AsmParser::parseDirectiveRealDCB(StringRef IDVal, const fltSemantics &Semantics) {
   SMLoc NumValuesLoc = Lexer.getLoc();
   int64_t NumValues;
@@ -4900,11 +4907,11 @@ bool AsmParser::parseDirectiveRealDCB(StringRef IDVal, const fltSemantics &Seman
     return false;
   }
 
-  if (parseComma())
+  APInt AsInt(APFloat::getSizeInBits(Semantics), 0);
+  if (getLexer().isNot(AsmToken::EndOfStatement) &&
+      (parseComma() || parseRealValue(Semantics, AsInt)))
     return true;
-
-  APInt AsInt;
-  if (parseRealValue(Semantics, AsInt) || parseEOL())
+  if (parseEOL())
     return true;
 
   for (uint64_t i = 0, e = NumValues; i != e; ++i)

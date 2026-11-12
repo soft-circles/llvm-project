@@ -15,6 +15,7 @@
 #define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSELFSTREAMER_H
 
 #include "MipsOptionRecord.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCELFStreamer.h"
 #include <memory>
@@ -31,6 +32,7 @@ class MipsELFStreamer : public MCELFStreamer {
   SmallVector<std::unique_ptr<MipsOptionRecord>, 8> MipsOptionRecords;
   MipsRegInfoRecord *RegInfoRecord;
   SmallVector<MCSymbol*, 4> Labels;
+  SmallSetVector<std::pair<MCSection *, uint32_t>, 4> Subsections;
 
 public:
   MipsELFStreamer(MCContext &Context, std::unique_ptr<MCAsmBackend> MAB,
@@ -51,6 +53,12 @@ public:
   /// Overriding this function allows us to dismiss all labels that are
   /// candidates for marking as microMIPS when .section directive is processed.
   void switchSection(MCSection *Section, uint32_t Subsection = 0) override;
+
+  /// The sections and subsections this streamer has switched to, in the order
+  /// it first did.
+  ArrayRef<std::pair<MCSection *, uint32_t>> subsections() const {
+    return Subsections.getArrayRef();
+  }
 
   /// Overriding these functions allows us to dismiss all labels that are
   /// candidates for marking as microMIPS when .word/.long/.4byte etc
