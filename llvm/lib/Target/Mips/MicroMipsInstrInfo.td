@@ -1182,6 +1182,10 @@ def : MipsPat<(add GPR32:$gp, (MipsGPRel tglobaladdr:$in)),
               (ADDiu_MM GPR32:$gp, tglobaladdr:$in)>, ISA_MICROMIPS;
 def : MipsPat<(add GPR32:$gp, (MipsGPRel tconstpool:$in)),
               (ADDiu_MM GPR32:$gp, tconstpool:$in)>, ISA_MICROMIPS;
+def : MipsPat<(MipsGPRel tglobaladdr:$in),
+              (ADDiu_MM ZERO, tglobaladdr:$in)>, ISA_MICROMIPS;
+def : MipsPat<(MipsGPRel tconstpool:$in),
+              (ADDiu_MM ZERO, tconstpool:$in)>, ISA_MICROMIPS;
 
 def : WrapperPat<tglobaladdr, ADDiu_MM, GPR32>, ISA_MICROMIPS;
 def : WrapperPat<tconstpool, ADDiu_MM, GPR32>, ISA_MICROMIPS;

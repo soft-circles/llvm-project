@@ -3274,6 +3274,10 @@ let AdditionalPredicates = [NotInMicroMips] in {
                 (ADDiu GPR32:$gp, tglobaladdr:$in)>, ISA_MIPS1, ABI_NOT_N64;
   def : MipsPat<(add GPR32:$gp, (MipsGPRel tconstpool:$in)),
                 (ADDiu GPR32:$gp, tconstpool:$in)>, ISA_MIPS1, ABI_NOT_N64;
+  def : MipsPat<(MipsGPRel tglobaladdr:$in),
+                (ADDiu ZERO, tglobaladdr:$in)>, ISA_MIPS1, ABI_NOT_N64;
+  def : MipsPat<(MipsGPRel tconstpool:$in),
+                (ADDiu ZERO, tconstpool:$in)>, ISA_MIPS1, ABI_NOT_N64;
 
   def : WrapperPat<tglobaladdr, ADDiu, GPR32>, ISA_MIPS1;
   def : WrapperPat<tconstpool, ADDiu, GPR32>, ISA_MIPS1;

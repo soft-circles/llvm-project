@@ -775,6 +775,10 @@ def : MipsPat<(add GPR64:$gp, (MipsGPRel tglobaladdr:$in)),
               (DADDiu GPR64:$gp, tglobaladdr:$in)>, ISA_MIPS3, ABI_N64;
 def : MipsPat<(add GPR64:$gp, (MipsGPRel tconstpool:$in)),
               (DADDiu GPR64:$gp, tconstpool:$in)>, ISA_MIPS3, ABI_N64;
+def : MipsPat<(MipsGPRel tglobaladdr:$in),
+              (DADDiu ZERO_64, tglobaladdr:$in)>, ISA_MIPS3, ABI_N64;
+def : MipsPat<(MipsGPRel tconstpool:$in),
+              (DADDiu ZERO_64, tconstpool:$in)>, ISA_MIPS3, ABI_N64;
 
 def : WrapperPat<tglobaladdr, DADDiu, GPR64>, ISA_MIPS3, GPR_64;
 def : WrapperPat<tconstpool, DADDiu, GPR64>, ISA_MIPS3, GPR_64;
