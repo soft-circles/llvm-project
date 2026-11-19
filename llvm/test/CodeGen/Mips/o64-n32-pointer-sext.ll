@@ -100,3 +100,20 @@ define void @pass_i32_upper_half(i64 inreg %pair) {
   call void @take_i32(i32 %t)
   ret void
 }
+
+; A pointer from the lower half of a slot that is spilled across a call must
+; still be sign-extended after the reload; folding the reload into the
+; sign-extension would pass the raw 64-bit slot.
+declare void @clobber()
+
+define void @pass_lower_half_after_spill(i64 %pair) {
+; ALL-LABEL: pass_lower_half_after_spill:
+; ALL:       ld $[[R:[0-9]+]], {{[0-9]+}}($sp)
+; ALL:       sll $4, $[[R]], 0
+  call void @clobber()
+  call void asm sideeffect "", "~{$16},~{$17},~{$18},~{$19},~{$20},~{$21},~{$22},~{$23},~{$30}"()
+  %lo = trunc i64 %pair to i32
+  %p = inttoptr i32 %lo to ptr
+  call void @take_ptr(ptr %p)
+  ret void
+}
